@@ -5,7 +5,7 @@ if sys.version_info < (2, 6):
     raise Exception('fastools requires Python 2.6 or higher.')
 
 # Todo: How does this play with pip freeze requirement files?
-requires = ['Bio']
+requires = ['biopython', 'python-Levenshtein']
 
 # Python 2.6 does not include the argparse module.
 try:
@@ -26,7 +26,7 @@ setup(
     license='MIT License',
     platforms=['any'],
     packages=['fastools'],
-    requires=requires,
+    install_requires=requires,
     entry_points = {
         'console_scripts': [
             'fastools = fastools.fastools:main',
@@ -34,7 +34,7 @@ setup(
         ]
     },
     classifiers = [
-        'Development Status :: 1 - Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
