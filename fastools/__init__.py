@@ -27,7 +27,7 @@ __version_info__ = ('0', '4', 'dev')
 
 __version__ = '.'.join(__version_info__)
 __author__ = 'LUMC, Jeroen F.J. Laros'
-__contact__ = 'j.f.j.laros@@lumc.nl'
+__contact__ = 'j.f.j.laros@lumc.nl'
 __homepage__ = 'https://humgenprojects.lumc.nl/svn/fastools'
 
 def docSplit(func):
