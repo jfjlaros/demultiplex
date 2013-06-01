@@ -21,12 +21,13 @@ from collections import defaultdict
 from Bio import SeqIO
 
 from .fastools import guessFileType
+from . import version
 
 class Demultiplex(object):
     """
     Demultiplex an NGS data file.
     """
-    def __init__(self, handle, barcodes, mismatch, amount, size, loc, read):
+    def __init__(self, handle, barcodes, mismatch, amount, size, loc, read, f):
         """
         Initialise the class.
 
@@ -44,12 +45,15 @@ class Demultiplex(object):
         @type loc: tuple(int, int)
         @arg read: Location of the read.
         @type read: tuple(int, int)
+        @arg f: A pairwise distance function.
+        @type f: function
         """
         self.__handle = handle
         self.__mismatch = mismatch
         self.__location = loc
         self.__read = read
         self.__names = []
+        self.__f = f
         self.__fileType = guessFileType(handle)
         self.getBarcode = self.__getBarcodeFromHeader
 
@@ -151,7 +155,7 @@ class Demultiplex(object):
             newRecord, barcode = self.getBarcode(record)
 
             # Find the closest barcode.
-            distance = map(lambda x: Levenshtein.distance(x, barcode),
+            distance = map(lambda x: self.__f(x, barcode),
                 self.__barcodes)
             minDistance = min(distance)
 
@@ -186,10 +190,18 @@ def main():
         nargs=2, help='location of the barcode')
     parser.add_argument('-r', dest='selection', type=int, default=[],
         nargs=2, help='selection of the read')
+    parser.add_argument('-H', dest='dfunc', default=False,
+        action="store_true", help="use Hamming distance")
+    parser.add_argument('-v', action="version", version=version(parser.prog))
+
     args = parser.parse_args()
 
+    dfunc = Levenshtein.distance
+    if args.dfunc:
+        dfunc = Levenshtein.hamming
+
     Demultiplex(args.input, args.barcodes, args.mismatch, args.amount,
-        args.size, args.location, args.selection)
+        args.size, args.location, args.selection, dfunc)
 #main
 
 if __name__ == "__main__":

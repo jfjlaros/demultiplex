@@ -22,10 +22,17 @@ Licensed under the MIT license, see the LICENSE file.
 
 RELEASE = False
 
-__version_info__ = ('0', '3', 'dev')
+__version_info__ = ('0', '4', 'dev')
 
 
 __version__ = '.'.join(__version_info__)
 __author__ = 'LUMC, Jeroen F.J. Laros'
 __contact__ = 'j.f.j.laros@@lumc.nl'
 __homepage__ = 'https://humgenprojects.lumc.nl/svn/fastools'
+
+def docSplit(func):
+    return func.__doc__.split("\n\n")[0]
+
+def version(name):
+    return "%s version %s\n%s\n%s\n%s" % (name, __version__, __author__,
+        __contact__, __homepage__)
