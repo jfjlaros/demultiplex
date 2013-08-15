@@ -23,7 +23,7 @@ Licensed under the MIT license, see the LICENSE file.
 
 RELEASE = False
 
-__version_info__ = ('0', '6', 'dev')
+__version_info__ = ('0', '6', '0')
 
 
 __version__ = '.'.join(__version_info__)
