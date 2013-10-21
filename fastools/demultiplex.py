@@ -140,8 +140,10 @@ class Demultiplex(object):
         """
         outputHandle = {}
 
-        # Create the output files in a dictionary indexed by barcode.
         filename, _, ext = self.__handle.name.rpartition('.')
+        defaultHandle = open("%s_%s.%s" % (filename, "UNKNOWN", ext), "w")
+
+        # Create the output files in a dictionary indexed by barcode.
         for i in self.__barcodes:
             name = i
 
@@ -162,6 +164,8 @@ class Demultiplex(object):
             if minDistance <= self.__mismatch:
                 SeqIO.write(newRecord, outputHandle[self.__barcodes[
                     distance.index(minDistance)]], self.__fileType)
+            else:
+                SeqIO.write(newRecord, defaultHandle, self.__fileType)
         #for
     #demultiplex
 #Demultiplex
