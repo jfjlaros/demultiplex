@@ -23,13 +23,13 @@ Licensed under the MIT license, see the LICENSE file.
 
 RELEASE = False
 
-__version_info__ = ('0', '8', '0')
+__version_info__ = ('0', '9', '0')
 
 
 __version__ = '.'.join(__version_info__)
 __author__ = 'LUMC, Jeroen F.J. Laros'
 __contact__ = 'j.f.j.laros@lumc.nl'
-__homepage__ = 'https://humgenprojects.lumc.nl/svn/fastools'
+__homepage__ = 'https://git.lumc.nl/j.f.j.laros/fastools'
 
 usage = __doc__.split("\n\n\n")
 
