@@ -21,7 +21,7 @@ import sys
 from Bio import SeqIO
 from collections import defaultdict
 
-from .fastools import guessFileType
+from .fastools import guess_file_format
 from . import version
 
 class Demultiplex(object):
@@ -55,11 +55,11 @@ class Demultiplex(object):
         self.__read = read
         self.__names = []
         self.__f = f
-        self.__fileType = guessFileType(handle)
-        self.getBarcode = self.__getBarcodeFromHeader
+        self.__fileType = guess_file_format(handle)
+        self.getBarcode = self._get_barcode_from_header
 
         if loc:
-            self.getBarcode = self.__getBarcodeFromRead
+            self.getBarcode = self._get_barcode_from_read
             self.__location[0] -= 1
         #if
 
@@ -74,12 +74,12 @@ class Demultiplex(object):
             self.__names, self.__barcodes = zip(*map(lambda x:
                 x.strip().split(), barcodes.readlines()))
         else:
-            self.__barcodes = self.guessBarcodes(amount, size)
+            self.__barcodes = self.guess_barcodes(amount, size)
 
         self.demultiplex()
     #__init__
 
-    def __getBarcodeFromHeader(self, record):
+    def _get_barcode_from_header(self, record):
         """
         Extract the barcode from the header of a FASTA/FASTQ record.
 
@@ -90,9 +90,9 @@ class Demultiplex(object):
         @rtype: (str, object)
         """
         return record, record.id.split('#')[1].split('/')[0]
-    #__getBarcodeFromHeader
+    #_get_barcode_from_header
 
-    def __getBarcodeFromRead(self, record):
+    def _get_barcode_from_read(self, record):
         """
         Extract the barcode from the sequence of a FASTA/FASTQ record.
 
@@ -104,9 +104,9 @@ class Demultiplex(object):
         """
         return (record[self.__read[0]:self.__read[1]],
             str(record.seq[self.__location[0]:self.__location[1]]))
-    #__getBarcodeFromRead
+    #_get_barcode_from_read
 
-    def guessBarcodes(self, amount, size):
+    def guess_barcodes(self, amount, size):
         """
         Find the most abundant barcodes in a FASTA/FASTQ file.
 
@@ -133,7 +133,7 @@ class Demultiplex(object):
         self.__handle.seek(0)
 
         return sorted(barcode, key=barcode.get)[::-1][:amount]
-    #guessBarcodes
+    #guess_barcodes
 
     def demultiplex(self):
         """
