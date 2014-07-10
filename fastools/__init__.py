@@ -23,17 +23,17 @@ Licensed under the MIT license, see the LICENSE file.
 
 RELEASE = False
 
-__version_info__ = ('0', '9', '0')
+__version_info__ = ('0', '9', '1')
 
 
 __version__ = '.'.join(__version_info__)
 __author__ = 'LUMC, Jeroen F.J. Laros'
-__contact__ = 'j.f.j.laros@lumc.nl'
+__contact__ = 'J.F.J.Laros@lumc.nl'
 __homepage__ = 'https://git.lumc.nl/j.f.j.laros/fastools'
 
 usage = __doc__.split("\n\n\n")
 
-def docSplit(func):
+def doc_split(func):
     return func.__doc__.split("\n\n")[0]
 
 def version(name):
