@@ -49,32 +49,32 @@ class Demultiplex(object):
         @arg f: A pairwise distance function.
         @type f: function
         """
-        self.__handle = handle
-        self.__mismatch = mismatch
-        self.__location = loc
-        self.__read = read
-        self.__names = []
-        self.__f = f
-        self.__fileType = guess_file_format(handle)
-        self.getBarcode = self._get_barcode_from_header
+        self._handle = handle
+        self._mismatch = mismatch
+        self._location = loc
+        self._read = read
+        self._names = []
+        self._f = f
+        self._file_format = guess_file_format(handle)
+        self.get_barcode = self._get_barcode_from_header
 
         if loc:
-            self.getBarcode = self._get_barcode_from_read
-            self.__location[0] -= 1
+            self.get_barcode = self._get_barcode_from_read
+            self._location[0] -= 1
         #if
 
         if not read:
             if loc:
-                self.__read = loc[1], 9999999
+                self._read = loc[1], 9999999
         #if
         else:
-            self.__read[0] -= 1
+            self._read[0] -= 1
 
         if barcodes:
-            self.__names, self.__barcodes = zip(*map(lambda x:
+            self._names, self._barcodes = zip(*map(lambda x:
                 x.strip().split(), barcodes.readlines()))
         else:
-            self.__barcodes = self.guess_barcodes(amount, size)
+            self._barcodes = self.guess_barcodes(amount, size)
 
         self.demultiplex()
     #__init__
@@ -102,8 +102,8 @@ class Demultiplex(object):
         @returns: A tuple containing the barcode and a selection of the record.
         @rtype: (str, object)
         """
-        return (record[self.__read[0]:self.__read[1]],
-            str(record.seq[self.__location[0]:self.__location[1]]))
+        return (record[self._read[0]:self._read[1]],
+            str(record.seq[self._location[0]:self._location[1]]))
     #_get_barcode_from_read
 
     def guess_barcodes(self, amount, size):
@@ -121,16 +121,16 @@ class Demultiplex(object):
         @rtype: list
         """
         barcode = defaultdict(int)
-        recordsRead = 0
+        records_read = 0
 
-        for record in SeqIO.parse(self.__handle, self.__fileType):
-            barcode[self.getBarcode(record)[1]] += 1
+        for record in SeqIO.parse(self._handle, self._file_format):
+            barcode[self.get_barcode(record)[1]] += 1
 
-            if recordsRead > size:
+            if records_read > size:
                 break
-            recordsRead += 1
+            records_read += 1
         #for
-        self.__handle.seek(0)
+        self._handle.seek(0)
 
         return sorted(barcode, key=barcode.get)[::-1][:amount]
     #guess_barcodes
@@ -139,34 +139,33 @@ class Demultiplex(object):
         """
         Demultiplex a FASTA/FASTQ file.
         """
-        outputHandle = {}
+        output_handle = {}
 
-        filename, _, ext = self.__handle.name.rpartition('.')
-        defaultHandle = open("%s_%s.%s" % (filename, "UNKNOWN", ext), "w")
+        filename, _, ext = self._handle.name.rpartition('.')
+        default_handle = open("%s_%s.%s" % (filename, "UNKNOWN", ext), "w")
 
         # Create the output files in a dictionary indexed by barcode.
-        for i in self.__barcodes:
+        for i in self._barcodes:
             name = i
 
-            if self.__names:
-                name = self.__names[self.__barcodes.index(i)]
+            if self._names:
+                name = self._names[self._barcodes.index(i)]
 
-            outputHandle[i] = open("%s_%s.%s" % (filename, name, ext), "w")
+            output_handle[i] = open("%s_%s.%s" % (filename, name, ext), "w")
         #for
 
-        for record in SeqIO.parse(self.__handle, self.__fileType):
-            newRecord, barcode = self.getBarcode(record)
+        for record in SeqIO.parse(self._handle, self._file_format):
+            new_record, barcode = self.get_barcode(record)
 
             # Find the closest barcode.
-            distance = map(lambda x: self.__f(x, barcode),
-                self.__barcodes)
-            minDistance = min(distance)
+            distance = map(lambda x: self._f(x, barcode), self._barcodes)
+            min_distance = min(distance)
 
-            if minDistance <= self.__mismatch:
-                SeqIO.write(newRecord, outputHandle[self.__barcodes[
-                    distance.index(minDistance)]], self.__fileType)
+            if min_distance <= self._mismatch:
+                SeqIO.write(new_record, output_handle[self._barcodes[
+                    distance.index(min_distance)]], self._file_format)
             else:
-                SeqIO.write(newRecord, defaultHandle, self.__fileType)
+                SeqIO.write(new_record, default_handle, self._file_format)
         #for
     #demultiplex
 #Demultiplex
