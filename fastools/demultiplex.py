@@ -32,22 +32,22 @@ class Demultiplex(object):
         """
         Initialise the class.
 
-        @arg handle: Open readable handle to an NGS data file.
-        @type handle: stream
-        @arg barcodes: Open readable handle to a file containing barcodes.
-        @type barcodes: stream
-        @arg mismatch: Number of allowed mismatches in the barcodes.
-        @type mismatch: int
-        @arg amount: Number of barcodes.
-        @type amount: int
-        @arg size: Number of records to probe.
-        @type size: int
-        @arg loc: Location of the barcode in a read.
-        @type loc: tuple(int, int)
-        @arg read: Location of the read.
-        @type read: tuple(int, int)
-        @arg f: A pairwise distance function.
-        @type f: function
+        :arg handle: Open readable handle to an NGS data file.
+        :type handle: stream
+        :arg barcodes: Open readable handle to a file containing barcodes.
+        :type barcodes: stream
+        :arg mismatch: Number of allowed mismatches in the barcodes.
+        :type mismatch: int
+        :arg amount: Number of barcodes.
+        :type amount: int
+        :arg size: Number of records to probe.
+        :type size: int
+        :arg loc: Location of the barcode in a read.
+        :type loc: tuple(int, int)
+        :arg read: Location of the read.
+        :type read: tuple(int, int)
+        :arg f: A pairwise distance function.
+        :type f: function
         """
         self._handle = handle
         self._mismatch = mismatch
@@ -83,11 +83,11 @@ class Demultiplex(object):
         """
         Extract the barcode from the header of a FASTA/FASTQ record.
 
-        @arg record: Fastq record.
-        @type record: object
+        :arg record: Fastq record.
+        :type record: object
 
-        @returns: A tuple containing the barcode and the record.
-        @rtype: (str, object)
+        :return: A tuple containing the barcode and the record.
+        :rtype: (str, object)
         """
         return record, record.id.split('#')[1].split('/')[0]
     #_get_barcode_from_header
@@ -96,11 +96,11 @@ class Demultiplex(object):
         """
         Extract the barcode from the sequence of a FASTA/FASTQ record.
 
-        @arg record: Fastq record.
-        @type record: object
+        :arg record: Fastq record.
+        :type record: object
 
-        @returns: A tuple containing the barcode and a selection of the record.
-        @rtype: (str, object)
+        :return: A tuple containing the barcode and a selection of the record.
+        :rtype: (str, object)
         """
         return (record[self._read[0]:self._read[1]],
             str(record.seq[self._location[0]:self._location[1]]))
@@ -112,13 +112,13 @@ class Demultiplex(object):
 
         After use, the input stream is rewinded.
 
-        @arg amount: Number of barcodes.
-        @type amount: int
-        @arg size: Number of records to probe.
-        @type size: int
+        :arg amount: Number of barcodes.
+        :type amount: int
+        :arg size: Number of records to probe.
+        :type size: int
 
-        @returns: List of barcodes.
-        @rtype: list
+        :return: List of barcodes.
+        :rtype: list
         """
         barcode = defaultdict(int)
         records_read = 0
