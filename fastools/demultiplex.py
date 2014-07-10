@@ -14,11 +14,12 @@ Format of the barcode file:
 name barcode
 """
 
-import Levenshtein
 import argparse
+import Levenshtein
 import sys
-from collections import defaultdict
+
 from Bio import SeqIO
+from collections import defaultdict
 
 from .fastools import guessFileType
 from . import version
