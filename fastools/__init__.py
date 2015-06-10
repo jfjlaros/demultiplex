@@ -3,12 +3,12 @@ fastools: Various tools for the analysis and manipulation of FASTA/FASTQ files.
 
 
 Copyright (c) 2015 Leiden University Medical Center <humgen@lumc.nl>
-Copyright (c) 2015 Jeroen F.J. Laros <j.f.j.laros@lumc.nl>
+Copyright (c) 2015 Jeroen F.J. Laros <J.F.J.Laros@lumc.nl>
 
 Licensed under the MIT license, see the LICENSE file.
 """
 
-__version_info__ = ('0', '10', '1')
+__version_info__ = ('0', '11', '0')
 
 
 __version__ = '.'.join(__version_info__)
