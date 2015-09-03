@@ -28,7 +28,8 @@ class Demultiplex(object):
     """
     Demultiplex an NGS data file.
     """
-    def __init__(self, handle, barcodes, mismatch, amount, size, loc, read, f):
+    def __init__(self, handle, barcodes, mismatch, amount, size, loc, read, f,
+            header_x):
         """
         Initialise the class.
 
@@ -48,6 +49,7 @@ class Demultiplex(object):
         :type read: tuple(int, int)
         :arg f: A pairwise distance function.
         :type f: function
+        :arg header_x: Use HiSeq X header.
         """
         self._handle = handle
         self._mismatch = mismatch
@@ -57,6 +59,9 @@ class Demultiplex(object):
         self._f = f
         self._file_format = guess_file_format(handle)
         self.get_barcode = self._get_barcode_from_header
+
+        if header_x:
+            self.get_barcode = self._get_barcode_from_header_x
 
         if loc:
             self.get_barcode = self._get_barcode_from_read
@@ -91,6 +96,20 @@ class Demultiplex(object):
         """
         return record, record.id.split('#')[1].split('/')[0]
     #_get_barcode_from_header
+
+    def _get_barcode_from_header_x(self, record):
+        """
+        Extract the barcode from the header of a FASTA/FASTQ record, for files
+        created with a HiSeq X.
+
+        :arg record: Fastq record.
+        :type record: object
+
+        :return: A tuple containing the barcode and the record.
+        :rtype: (str, object)
+        """
+        return record, record.description.split(':')[-1]
+    #_get_barcode_from_header_x
 
     def _get_barcode_from_read(self, record):
         """
@@ -196,6 +215,8 @@ def main():
         nargs=2, help='selection of the read')
     parser.add_argument('-H', dest='dfunc', default=False,
         action="store_true", help="use Hamming distance")
+    parser.add_argument('-x', dest='header_x', default=False,
+        action="store_true", help='use HiSeq X header format')
     parser.add_argument('-v', action="version", version=version(parser.prog))
 
     args = parser.parse_args()
@@ -205,7 +226,7 @@ def main():
         dfunc = Levenshtein.hamming
 
     Demultiplex(args.input, args.barcodes, args.mismatch, args.amount,
-        args.size, args.location, args.selection, dfunc)
+        args.size, args.location, args.selection, dfunc, args.header_x)
 #main
 
 if __name__ == "__main__":
