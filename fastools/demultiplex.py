@@ -24,6 +24,7 @@ from collections import defaultdict
 from .fastools import guess_file_format
 from . import version
 
+
 class Demultiplex(object):
     """
     Demultiplex an NGS data file.
@@ -33,23 +34,16 @@ class Demultiplex(object):
         """
         Initialise the class.
 
-        :arg handle: Open readable handle to an NGS data file.
-        :type handle: stream
-        :arg barcodes: Open readable handle to a file containing barcodes.
-        :type barcodes: stream
-        :arg mismatch: Number of allowed mismatches in the barcodes.
-        :type mismatch: int
-        :arg amount: Number of barcodes.
-        :type amount: int
-        :arg size: Number of records to probe.
-        :type size: int
-        :arg loc: Location of the barcode in a read.
-        :type loc: tuple(int, int)
-        :arg read: Location of the read.
-        :type read: tuple(int, int)
-        :arg f: A pairwise distance function.
-        :type f: function
-        :arg header_x: Use HiSeq X header.
+        :arg stream handle: Open readable handle to an NGS data file.
+        :arg stream barcodes: Open readable handle to a file containing
+            barcodes.
+        :arg int mismatch: Number of allowed mismatches in the barcodes.
+        :arg int amount: Number of barcodes.
+        :arg int size: Number of records to probe.
+        :arg tuple(int, int) loc: Location of the barcode in a read.
+        :arg tuple(int, int) read: Location of the read.
+        :arg function f: A pairwise distance function.
+        :arg bool header_x: Use HiSeq X header.
         """
         self._handle = handle
         self._mismatch = mismatch
@@ -66,12 +60,10 @@ class Demultiplex(object):
         if loc:
             self.get_barcode = self._get_barcode_from_read
             self._location[0] -= 1
-        #if
 
         if not read:
             if loc:
                 self._read = loc[1], 9999999
-        #if
         else:
             self._read[0] -= 1
 
@@ -82,48 +74,45 @@ class Demultiplex(object):
             self._barcodes = self.guess_barcodes(amount, size)
 
         self.demultiplex()
-    #__init__
+
 
     def _get_barcode_from_header(self, record):
         """
         Extract the barcode from the header of a FASTA/FASTQ record.
 
-        :arg record: Fastq record.
-        :type record: object
+        :arg object record: Fastq record.
 
-        :return: A tuple containing the barcode and the record.
-        :rtype: (str, object)
+        :returns tuple(str, object): A tuple containing the barcode and the
+            record.
         """
         return record, record.id.split('#')[1].split('/')[0]
-    #_get_barcode_from_header
+
 
     def _get_barcode_from_header_x(self, record):
         """
         Extract the barcode from the header of a FASTA/FASTQ record, for files
         created with a HiSeq X.
 
-        :arg record: Fastq record.
-        :type record: object
+        :arg object record: Fastq record.
 
-        :return: A tuple containing the barcode and the record.
-        :rtype: (str, object)
+        :returns tuple(str, object): A tuple containing the barcode and the
+            record.
         """
         return record, record.description.split(':')[-1]
-    #_get_barcode_from_header_x
+
 
     def _get_barcode_from_read(self, record):
         """
         Extract the barcode from the sequence of a FASTA/FASTQ record.
 
-        :arg record: Fastq record.
-        :type record: object
+        :arg object record: Fastq record.
 
-        :return: A tuple containing the barcode and a selection of the record.
-        :rtype: (str, object)
+        :returns tuple(str, object): A tuple containing the barcode and the
+            record.
         """
         return (record[self._read[0]:self._read[1]],
             str(record.seq[self._location[0]:self._location[1]]))
-    #_get_barcode_from_read
+
 
     def guess_barcodes(self, amount, size):
         """
@@ -131,13 +120,10 @@ class Demultiplex(object):
 
         After use, the input stream is rewinded.
 
-        :arg amount: Number of barcodes.
-        :type amount: int
-        :arg size: Number of records to probe.
-        :type size: int
+        :arg int amount: Number of barcodes.
+        :arg int size: Number of records to probe.
 
-        :return: List of barcodes.
-        :rtype: list
+        :returns list: List of barcodes.
         """
         barcode = defaultdict(int)
         records_read = 0
@@ -148,11 +134,11 @@ class Demultiplex(object):
             if records_read > size:
                 break
             records_read += 1
-        #for
+
         self._handle.seek(0)
 
         return sorted(barcode, key=barcode.get)[::-1][:amount]
-    #guess_barcodes
+
 
     def demultiplex(self):
         """
@@ -171,7 +157,6 @@ class Demultiplex(object):
                 name = self._names[self._barcodes.index(i)]
 
             output_handle[i] = open("%s_%s.%s" % (filename, name, ext), "w")
-        #for
 
         for record in SeqIO.parse(self._handle, self._file_format):
             new_record, barcode = self.get_barcode(record)
@@ -185,9 +170,7 @@ class Demultiplex(object):
                     distance.index(min_distance)]], self._file_format)
             else:
                 SeqIO.write(new_record, default_handle, self._file_format)
-        #for
-    #demultiplex
-#Demultiplex
+
 
 def main():
     """
@@ -227,7 +210,7 @@ def main():
 
     Demultiplex(args.input, args.barcodes, args.mismatch, args.amount,
         args.size, args.location, args.selection, dfunc, args.header_x)
-#main
+
 
 if __name__ == "__main__":
     main()
