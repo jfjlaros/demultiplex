@@ -1,27 +1,14 @@
 """
 Tests for demultiplex.
 """
-import md5
 import Levenshtein
-import StringIO
 
 from fastools import demultiplex
 
-
-class FakeOpen(object):
-    def __init__(self):
-        self.handles = []
-
-    def open(self, name, attr=''):
-        handle = StringIO.StringIO()
-        handle.name = name
-        self.handles.append(handle)
-        return handle
+from shared import FakeOpen, md5_check
 
 
 class TestCLI(object):
-    """
-    """
     def setup(self):
         self._fake_open = FakeOpen()
         demultiplex.open = self._fake_open.open
@@ -30,8 +17,7 @@ class TestCLI(object):
         self._barcodes = open('data/barcodes.txt')
 
     def _md5_check(self, fileno, md5sum):
-        return md5.md5(
-            self._fake_open.handles[fileno].getvalue()).hexdigest() == md5sum
+        return md5_check(self._fake_open.handles[fileno].getvalue(), md5sum)
 
     def test_from_file(self):
         demultiplex.Demultiplex(
