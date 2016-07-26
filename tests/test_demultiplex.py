@@ -10,14 +10,15 @@ from shared import FakeOpen, md5_check
 
 class TestCLI(object):
     def setup(self):
-        self._fake_open = FakeOpen()
-        demultiplex.open = self._fake_open.open
+        fake_open = FakeOpen()
+        self._handles = fake_open.handles
+        demultiplex.open = fake_open.open
 
         self._input = open('data/demultiplex.fq')
         self._barcodes = open('data/barcodes.txt')
 
     def _md5_check(self, fileno, md5sum):
-        return md5_check(self._fake_open.handles[fileno].getvalue(), md5sum)
+        return md5_check(self._handles[fileno].getvalue(), md5sum)
 
     def test_from_file(self):
         demultiplex.Demultiplex(
