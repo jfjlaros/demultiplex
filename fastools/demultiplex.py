@@ -11,7 +11,6 @@ positions are one-based and inclusive.
 Format of the barcode file:
 name barcode
 """
-
 import argparse
 import Levenshtein
 import sys
