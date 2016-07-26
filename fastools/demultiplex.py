@@ -71,8 +71,6 @@ class Demultiplex(object):
         else:
             self._barcodes = self.guess_barcodes(amount, size)
 
-        self.demultiplex()
-
     def _get_barcode_from_header(self, record):
         """
         Extract the barcode from the header of a FASTA/FASTQ record.
@@ -216,7 +214,7 @@ def main():
 
     Demultiplex(
         args.input, args.barcodes, args.mismatch, args.amount, args.size,
-        args.location, args.selection, dfunc, args.header_x)
+        args.location, args.selection, dfunc, args.header_x).demultiplex()
 
 
 if __name__ == "__main__":

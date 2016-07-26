@@ -1,0 +1,4 @@
+1 ACTA
+2 ACTC
+3 ACTG
+4 ACTT
