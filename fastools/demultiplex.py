@@ -45,8 +45,8 @@ class Demultiplex(object):
         """
         self._handle = handle
         self._mismatch = mismatch
-        self._location = loc
-        self._read = read
+        self._location = list(loc)
+        self._read = list(read)
         self._names = []
         self._f = f
         self._file_format = guess_file_format(handle)

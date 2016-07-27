@@ -8,10 +8,10 @@ def md5_check(data, md5sum):
 
 class FakeOpen(object):
     def __init__(self):
-        self.handles = []
+        self.handles = {}
 
     def open(self, name, attr=''):
         handle = StringIO.StringIO()
         handle.name = name
-        self.handles.append(handle)
+        self.handles[name] = handle
         return handle
