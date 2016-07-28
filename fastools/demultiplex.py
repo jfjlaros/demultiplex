@@ -22,13 +22,32 @@ from .fastools import guess_file_format
 from . import version
 
 
+def guess_header_format(handle):
+    """
+    Guess the header format.
+
+    :arg stream handle: Open readable handle to an NGS data file.
+
+    :return str: Either 'normal', 'x' or 'unknown'.
+    """
+    if handle.name != '<stdin>':
+        line = handle.readline().strip('\n')
+        handle.seek(0)
+    else:
+        line = handle.peek(1024).split('\n')[0]
+
+    if line.count('#') == 1 and line.split('#')[1].count('/') == 1:
+        return 'normal'
+    if line.count(' ') == 1 and line.split(' ')[1].count(':') == 3:
+        return 'x'
+    return 'unknown'
+
+
 class Demultiplex(object):
     """
     Demultiplex an NGS data file.
     """
-    def __init__(
-            self, handle, barcodes, mismatch, amount, size, loc, read, f,
-            header_x):
+    def __init__(self, handle, barcodes, mismatch, amount, size, loc, read, f):
         """
         Initialise the class.
 
@@ -41,7 +60,6 @@ class Demultiplex(object):
         :arg tuple(int, int) loc: Location of the barcode in a read.
         :arg tuple(int, int) read: Location of the read.
         :arg function f: A pairwise distance function.
-        :arg bool header_x: Use HiSeq X header.
         """
         self._handle = handle
         self._mismatch = mismatch
@@ -50,13 +68,17 @@ class Demultiplex(object):
         self._names = []
         self._f = f
         self._file_format = guess_file_format(handle)
-        self.get_barcode = self._get_barcode_from_header
 
-        if header_x:
-            self.get_barcode = self._get_barcode_from_header_x
+        header_format = guess_header_format(handle)
+        if header_format == 'normal':
+            self._get_barcode = self._get_barcode_from_header
+        elif guess_header_format(handle) == 'x':
+            self._get_barcode = self._get_barcode_from_header_x
+        else:
+            raise ValueError('header format not recognised')
 
         if loc:
-            self.get_barcode = self._get_barcode_from_read
+            self._get_barcode = self._get_barcode_from_read
             self._location[0] -= 1
 
         if not read:
@@ -125,7 +147,7 @@ class Demultiplex(object):
         records_read = 0
 
         for record in SeqIO.parse(self._handle, self._file_format):
-            barcode[self.get_barcode(record)[1]] += 1
+            barcode[self._get_barcode(record)[1]] += 1
 
             if records_read > size:
                 break
@@ -154,7 +176,7 @@ class Demultiplex(object):
             output_handle[i] = open("%s_%s.%s" % (filename, name, ext), "w")
 
         for record in SeqIO.parse(self._handle, self._file_format):
-            new_record, barcode = self.get_barcode(record)
+            new_record, barcode = self._get_barcode(record)
 
             # Find the closest barcode.
             distance = map(lambda x: self._f(x, barcode), self._barcodes)
@@ -204,9 +226,6 @@ def main():
     parser.add_argument(
         '-H', dest='dfunc', default=False, action="store_true",
         help="use Hamming distance")
-    parser.add_argument(
-        '-x', dest='header_x', default=False, action="store_true",
-        help='use HiSeq X header format')
     parser.add_argument('-v', action="version", version=version(parser.prog))
 
     args = parser.parse_args()
@@ -218,7 +237,7 @@ def main():
     try:
         Demultiplex(
             args.input, args.barcodes, args.mismatch, args.amount, args.size,
-            args.location, args.selection, dfunc, args.header_x).demultiplex()
+            args.location, args.selection, dfunc).demultiplex()
     except ValueError, error:
         parser.error(error)
 

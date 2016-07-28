@@ -2,11 +2,10 @@
 Tests for demultiplex.
 """
 import Levenshtein
-import StringIO
 
 from fastools import demultiplex
 
-from shared import FakeOpen, md5_check
+from shared import FakeOpen, md5_check, make_fake_file
 
 
 class TestCLI(object):
@@ -30,7 +29,7 @@ class TestCLI(object):
         """
         demultiplex.Demultiplex(
             self._input, self._barcodes, 0, 0, 0, (), (),
-            Levenshtein.distance, False).demultiplex()
+            Levenshtein.distance).demultiplex()
         assert len(self._handles) == 5
         assert self._md5_check(
             'data/demultiplex_UNKNOWN.fq', '7a2889d04b4e8514ca01ea6c75884cd6')
@@ -46,7 +45,7 @@ class TestCLI(object):
         """
         demultiplex.Demultiplex(
             self._input, self._barcodes, 1, 0, 0, (), (),
-            Levenshtein.distance, False).demultiplex()
+            Levenshtein.distance).demultiplex()
         assert len(self._handles) == 5
         assert self._md5_check(
             'data/demultiplex_UNKNOWN.fq', 'd41d8cd98f00b204e9800998ecf8427e')
@@ -63,7 +62,7 @@ class TestCLI(object):
         """
         demultiplex.Demultiplex(
             self._input, None, 0, 4, 1000000, (2, 5), (10, 100),
-            Levenshtein.distance, False).demultiplex()
+            Levenshtein.distance).demultiplex()
         assert len(self._handles) == 5
         assert self._md5_check(
             'data/demultiplex_UNKNOWN.fq', 'd41d8cd98f00b204e9800998ecf8427e')
@@ -81,7 +80,7 @@ class TestCLI(object):
         """
         demultiplex.Demultiplex(
             self._input_x, self._barcodes, 0, 0, 0, (), (),
-            Levenshtein.distance, True).demultiplex()
+            Levenshtein.distance).demultiplex()
         assert len(self._handles) == 5
         assert self._md5_check(
             'data/demultiplex_x_UNKNOWN.fq',
@@ -98,8 +97,8 @@ class TestCLI(object):
         Result: file ACTT contains two sequences and UNKNOWN contains three.
         """
         demultiplex.Demultiplex(
-            self._input_x, None, 0, 1, 1000000, (), (), Levenshtein.distance,
-            True).demultiplex()
+            self._input_x, None, 0, 1, 1000000, (), (),
+            Levenshtein.distance).demultiplex()
         assert len(self._handles) == 2
         assert self._md5_check(
             'data/demultiplex_x_UNKNOWN.fq',
@@ -114,8 +113,8 @@ class TestCLI(object):
         Result: file ACTT contains five sequences and UNKNOWN is empty.
         """
         demultiplex.Demultiplex(
-            self._input_x, None, 1, 1, 1000000, (), (), Levenshtein.distance,
-            True).demultiplex()
+            self._input_x, None, 1, 1, 1000000, (), (),
+            Levenshtein.distance).demultiplex()
         assert len(self._handles) == 2
         assert self._md5_check(
             'data/demultiplex_x_UNKNOWN.fq',
@@ -124,13 +123,19 @@ class TestCLI(object):
             'data/demultiplex_x_ACTT.fq', '14804d194a384503ae1fa35e6dba4818')
 
     def test_wrong_barcode_format(self):
-        """
-        """
-        barcodes = StringIO.StringIO()
-        barcodes.writelines('ACTA\nACTC\nACTG\nACTT\n')
-        barcodes.seek(0)
+        handle = make_fake_file('', 'ACTA\nACTC\nACTG\nACTT\n')
         try:
             demultiplex.Demultiplex(
-                self._input, barcodes, 0, 0, 0, (), (), lambda x, y: 0, False)
+                self._input, handle, 0, 0, 0, (), (), lambda x, y: 0)
         except ValueError, error:
             assert error[0] == 'invalid barcodes file format'
+
+    def test_guess_header_normal(self):
+        assert demultiplex.guess_header_format(self._input) == 'normal'
+
+    def test_guess_header_x(self):
+        assert demultiplex.guess_header_format(self._input_x) == 'x'
+
+    def test_guess_header_unknown(self):
+        assert demultiplex.guess_header_format(
+            make_fake_file('', '@name description\n')) == 'unknown'

@@ -6,6 +6,14 @@ def md5_check(data, md5sum):
     return md5.md5(data).hexdigest() == md5sum
 
 
+def make_fake_file(name, content):
+    handle = StringIO.StringIO()
+    handle.name = name
+    handle.writelines(content)
+    handle.seek(0)
+    return handle
+
+
 class FakeOpen(object):
     def __init__(self):
         self.handles = {}
