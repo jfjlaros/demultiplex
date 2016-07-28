@@ -69,21 +69,25 @@ class Demultiplex(object):
         self._f = f
         self._file_format = guess_file_format(handle)
 
-        header_format = guess_header_format(handle)
-        if header_format == 'normal':
-            self._get_barcode = self._get_barcode_from_header
-        elif guess_header_format(handle) == 'x':
-            self._get_barcode = self._get_barcode_from_header_x
+        if not loc:
+            # No location is given, we need to get the barcodes from the
+            # header.
+            header_format = guess_header_format(handle)
+            if header_format == 'normal':
+                self._get_barcode = self._get_barcode_from_header
+            elif guess_header_format(handle) == 'x':
+                self._get_barcode = self._get_barcode_from_header_x
+            else:
+                raise ValueError('header format not recognised')
         else:
-            raise ValueError('header format not recognised')
-
-        if loc:
             self._get_barcode = self._get_barcode_from_read
             self._location[0] -= 1
 
         if not read:
+            # No read selection is done, but if a location is given use the
+            # position afther the location as the start of the selection.
             if loc:
-                self._read = loc[1], 9999999
+                self._read = loc[1], None
         else:
             self._read[0] -= 1
 
@@ -199,8 +203,7 @@ def main():
     usage = __doc__.split("\n\n\n")
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=usage[0],
-        epilog=usage[1])
+        description=usage[0], epilog=usage[1])
 
     parser.add_argument(
         '-i', dest='input', type=argparse.FileType('r'), default=sys.stdin,
