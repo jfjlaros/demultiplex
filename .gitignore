@@ -1,0 +1,5 @@
+*.pyc
+*.swp
+.cache
+dist
+fastools.egg-info
