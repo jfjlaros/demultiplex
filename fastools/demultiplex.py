@@ -66,8 +66,11 @@ class Demultiplex(object):
             self._read[0] -= 1
 
         if barcodes:
-            self._names, self._barcodes = zip(
-                *map(lambda x: x.strip().split(), barcodes.readlines()))
+            try:
+                self._names, self._barcodes = zip(
+                    *map(lambda x: x.strip().split(), barcodes.readlines()))
+            except ValueError, error:
+                raise ValueError('invalid barcodes file format')
         else:
             self._barcodes = self.guess_barcodes(amount, size)
 
@@ -212,9 +215,12 @@ def main():
     if args.dfunc:
         dfunc = Levenshtein.hamming
 
-    Demultiplex(
-        args.input, args.barcodes, args.mismatch, args.amount, args.size,
-        args.location, args.selection, dfunc, args.header_x).demultiplex()
+    try:
+        Demultiplex(
+            args.input, args.barcodes, args.mismatch, args.amount, args.size,
+            args.location, args.selection, dfunc, args.header_x).demultiplex()
+    except ValueError, error:
+        parser.error(error)
 
 
 if __name__ == "__main__":

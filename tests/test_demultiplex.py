@@ -2,6 +2,7 @@
 Tests for demultiplex.
 """
 import Levenshtein
+import StringIO
 
 from fastools import demultiplex
 
@@ -121,3 +122,15 @@ class TestCLI(object):
             'd41d8cd98f00b204e9800998ecf8427e')
         assert self._md5_check(
             'data/demultiplex_x_ACTT.fq', '14804d194a384503ae1fa35e6dba4818')
+
+    def test_wrong_barcode_format(self):
+        """
+        """
+        barcodes = StringIO.StringIO()
+        barcodes.writelines('ACTA\nACTC\nACTG\nACTT\n')
+        barcodes.seek(0)
+        try:
+            demultiplex.Demultiplex(
+                self._input, barcodes, 0, 0, 0, (), (), lambda x, y: 0, False)
+        except ValueError, error:
+            assert error[0] == 'invalid barcodes file format'
