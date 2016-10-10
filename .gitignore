@@ -1,5 +1,6 @@
 *.pyc
 *.swp
 .cache
+build
 dist
 fastools.egg-info
