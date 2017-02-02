@@ -20,6 +20,7 @@ from collections import defaultdict
 from jit_open import JITOpen
 
 from .fastools import guess_file_format
+from .peeker import Peeker
 from . import version
 
 
@@ -148,6 +149,7 @@ class Demultiplex(object):
 
         :returns list: List of barcodes.
         """
+        # TODO: Add an option to select frequent barcodes, e.g., by percentage.
         barcode = defaultdict(int)
         records_read = 0
 
@@ -207,8 +209,8 @@ def main():
         description=usage[0], epilog=usage[1])
 
     parser.add_argument(
-        '-i', dest='input', type=argparse.FileType('r'), default=sys.stdin,
-        help='input file (default=<stdin>)')
+        'input', metavar='INPUT', type=argparse.FileType('r'),
+        help='input file')
     parser.add_argument(
         '-b', dest='barcodes', type=argparse.FileType('r'),
         help='file containing barcodes')
@@ -231,6 +233,8 @@ def main():
         '-H', dest='dfunc', default=False, action="store_true",
         help="use Hamming distance")
     parser.add_argument('-v', action="version", version=version(parser.prog))
+
+    sys.stdin = Peeker(sys.stdin)
 
     args = parser.parse_args()
 
