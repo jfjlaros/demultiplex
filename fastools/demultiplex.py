@@ -77,7 +77,7 @@ class Demultiplex(object):
             header_format = guess_header_format(handle)
             if header_format == 'normal':
                 self._get_barcode = self._get_barcode_from_header
-            elif guess_header_format(handle) == 'x':
+            elif header_format == 'x':
                 self._get_barcode = self._get_barcode_from_header_x
             else:
                 raise ValueError('header format not recognised')
