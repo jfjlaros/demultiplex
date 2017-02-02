@@ -17,6 +17,7 @@ import sys
 
 from Bio import SeqIO
 from collections import defaultdict
+from jit_open import JITOpen
 
 from .fastools import guess_file_format
 from . import version
@@ -168,7 +169,7 @@ class Demultiplex(object):
         output_handle = {}
 
         filename, _, ext = self._handle.name.rpartition('.')
-        default_handle = open("%s_%s.%s" % (filename, "UNKNOWN", ext), "w")
+        default_handle = JITOpen("%s_%s.%s" % (filename, "UNKNOWN", ext), "w")
 
         # Create the output files in a dictionary indexed by barcode.
         for i in self._barcodes:
@@ -177,7 +178,7 @@ class Demultiplex(object):
             if self._names:
                 name = self._names[self._barcodes.index(i)]
 
-            output_handle[i] = open("%s_%s.%s" % (filename, name, ext), "w")
+            output_handle[i] = JITOpen("%s_%s.%s" % (filename, name, ext), "w")
 
         for record in SeqIO.parse(self._handle, self._file_format):
             new_record, barcode = self._get_barcode(record)

@@ -12,7 +12,7 @@ class TestCLI(object):
     def setup(self):
         fake_open = FakeOpen()
         self._handles = fake_open.handles
-        demultiplex.open = fake_open.open
+        demultiplex.JITOpen = fake_open.open
 
         self._input = open('data/demultiplex.fq')
         self._input_x = open('data/demultiplex_x.fq')
