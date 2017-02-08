@@ -49,7 +49,9 @@ class Demultiplex(object):
     """
     Demultiplex an NGS data file.
     """
-    def __init__(self, handle, barcodes, mismatch, amount, size, loc, read, f):
+    def __init__(
+            self, handle, barcodes, mismatch, amount, size, loc, read, dual,
+            f):
         """
         Initialise the class.
 
@@ -68,10 +70,16 @@ class Demultiplex(object):
         self._location = list(loc)
         self._read = list(read)
         self._names = []
+        self._dual = dual
         self._f = f
         self._file_format = guess_file_format(handle)
 
-        if not loc:
+        if dual:
+            if dual == 1:
+                self._get_barcode = self._get_barcode_from_header_x_dual_1
+            else:
+                self._get_barcode = self._get_barcode_from_header_x_dual_2
+        elif not loc:
             # No location is given, we need to get the barcodes from the
             # header.
             header_format = guess_header_format(handle)
@@ -124,6 +132,21 @@ class Demultiplex(object):
             record.
         """
         return record, record.description.split(':')[-1]
+
+    def _get_barcode_from_header_x_dual_1(self, record):
+        """
+        Extract the barcode from the dual barcoded header of a FASTA/FASTQ
+        record, for files created with a HiSeq X.
+
+        :arg object record: Fastq record.
+
+        :returns tuple(str, object): A tuple containing the barcode and the
+            record.
+        """
+        return record, record.description.split(':')[-1].split('+')[0]
+
+    def _get_barcode_from_header_x_dual_2(self, record):
+        return record, record.description.split(':')[-1].split('+')[1]
 
     def _get_barcode_from_read(self, record):
         """
@@ -230,6 +253,9 @@ def main():
         '-r', dest='selection', type=int, default=[], nargs=2,
         help='selection of the read')
     parser.add_argument(
+        '-d',  dest='dual', type=int, default=0,
+        help='Select in dual barodes (%(type)s default: $(default)s)')
+    parser.add_argument(
         '-H', dest='dfunc', default=False, action="store_true",
         help="use Hamming distance")
     parser.add_argument('-v', action="version", version=version(parser.prog))
@@ -245,7 +271,7 @@ def main():
     try:
         Demultiplex(
             args.input, args.barcodes, args.mismatch, args.amount, args.size,
-            args.location, args.selection, dfunc).demultiplex()
+            args.location, args.selection, args.dual, dfunc).demultiplex()
     except ValueError, error:
         parser.error(error)
 
