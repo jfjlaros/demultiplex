@@ -63,6 +63,8 @@ class Demultiplex(object):
         :arg int size: Number of records to probe.
         :arg tuple(int, int) loc: Location of the barcode in a read.
         :arg tuple(int, int) read: Location of the read.
+        :art int dual: Dual barcoding selection (0=disabled, 1=first,
+            2=second).
         :arg function f: A pairwise distance function.
         """
         self._handle = handle

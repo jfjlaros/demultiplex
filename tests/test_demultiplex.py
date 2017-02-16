@@ -28,7 +28,7 @@ class TestCLI(object):
         Result: file 1, 3 and UNKNOWN contain one read, file 4 contains two.
         """
         demultiplex.Demultiplex(
-            self._input, self._barcodes, 0, 0, 0, (), (),
+            self._input, self._barcodes, 0, 0, 0, (), (), 0,
             Levenshtein.distance).demultiplex()
         assert len(self._handles) == 5
         assert self._md5_check(
@@ -44,7 +44,7 @@ class TestCLI(object):
         empty. Notably file 2 is not empty although the barcode is shorter.
         """
         demultiplex.Demultiplex(
-            self._input, self._barcodes, 1, 0, 0, (), (),
+            self._input, self._barcodes, 1, 0, 0, (), (), 0,
             Levenshtein.distance).demultiplex()
         assert len(self._handles) == 5
         assert self._md5_check(
@@ -61,7 +61,7 @@ class TestCLI(object):
         two and UNKNOWN is empty.
         """
         demultiplex.Demultiplex(
-            self._input, None, 0, 4, 1000000, (2, 5), (10, 100),
+            self._input, None, 0, 4, 1000000, (2, 5), (10, 100), 0,
             Levenshtein.distance).demultiplex()
         assert len(self._handles) == 5
         assert self._md5_check(
@@ -79,7 +79,7 @@ class TestCLI(object):
         is empty.
         """
         demultiplex.Demultiplex(
-            self._input_x, self._barcodes, 0, 0, 0, (), (),
+            self._input_x, self._barcodes, 0, 0, 0, (), (), 0,
             Levenshtein.distance).demultiplex()
         assert len(self._handles) == 5
         assert self._md5_check(
@@ -97,7 +97,7 @@ class TestCLI(object):
         Result: file ACTT contains two sequences and UNKNOWN contains three.
         """
         demultiplex.Demultiplex(
-            self._input_x, None, 0, 1, 1000000, (), (),
+            self._input_x, None, 0, 1, 1000000, (), (), 0,
             Levenshtein.distance).demultiplex()
         assert len(self._handles) == 2
         assert self._md5_check(
@@ -113,7 +113,7 @@ class TestCLI(object):
         Result: file ACTT contains five sequences and UNKNOWN is empty.
         """
         demultiplex.Demultiplex(
-            self._input_x, None, 1, 1, 1000000, (), (),
+            self._input_x, None, 1, 1, 1000000, (), (), 0,
             Levenshtein.distance).demultiplex()
         assert len(self._handles) == 2
         assert self._md5_check(
@@ -126,7 +126,7 @@ class TestCLI(object):
         handle = make_fake_file('', 'ACTA\nACTC\nACTG\nACTT\n')
         try:
             demultiplex.Demultiplex(
-                self._input, handle, 0, 0, 0, (), (), lambda x, y: 0)
+                self._input, handle, 0, 0, 0, (), (), 0, lambda x, y: 0)
         except ValueError, error:
             assert error[0] == 'invalid barcodes file format'
 
