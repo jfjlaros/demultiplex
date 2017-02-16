@@ -197,13 +197,14 @@ class Demultiplex(object):
         default_handle = JITOpen("%s_%s.%s" % (filename, "UNKNOWN", ext), "w")
 
         # Create the output files in a dictionary indexed by barcode.
-        for i in self._barcodes:
-            name = i
+        for index, barcode in enumerate(self._barcodes):
+            name = barcode
 
             if self._names:
-                name = self._names[self._barcodes.index(i)]
+                name = self._names[index]
 
-            output_handle[i] = JITOpen("%s_%s.%s" % (filename, name, ext), "w")
+            output_handle[barcode] = JITOpen(
+                "%s_%s.%s" % (filename, name, ext), "w")
 
         for record in SeqIO.parse(self._handle, self._file_format):
             new_record, barcode = self._get_barcode(record)
