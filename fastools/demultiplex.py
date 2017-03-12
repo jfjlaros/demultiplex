@@ -33,8 +33,11 @@ class Extractor(object):
         self._start = start
         self._end = end
 
-        self._location = location
-        if not self._location:
+        if self._start:
+            self._start -= 1
+
+        self._get_barcode = _get_barcode['unknown']
+        if not location:
             self._get_barcode = _get_barcode[guess_header_format(handle)]
 
     def get(self, record):
@@ -81,7 +84,10 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
 
     barcodes = {}
     for line in barcodes_handle.readlines():
-        name, barcode = line.strip().split()
+        try:
+            name, barcode = line.strip().split()
+        except ValueError:
+            raise ValueError('invalid barcodes file format')
         barcodes[barcode] = _open_files(filenames, name)
 
     trie = Trie(barcodes.keys())

@@ -7,7 +7,6 @@ Copyright (c) 2016 Jeroen F.J. Laros <J.F.J.Laros@lumc.nl>
 
 Licensed under the MIT license, see the LICENSE file.
 """
-
 __version_info__ = ('0', '14', '0')
 
 __version__ = '.'.join(__version_info__)
