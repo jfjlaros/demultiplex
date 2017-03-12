@@ -1,283 +1,211 @@
 """
-Split a FASTA/FASTQ file on barcode.
+Split FASTA/FASTQ files on barcode.
 
-
-If a file containing barcodes is given, the options concerning guessing the
-barcodes (AMOUNT and SIZE) will be ignored.
-
-Use the location (-r) if the barcode is not in the header, but in the read. The
-positions are one-based and inclusive.
 
 Format of the barcode file:
 name barcode
 """
 import argparse
-import Levenshtein
 import sys
 
-from Bio import SeqIO
 from collections import defaultdict
+from os.path import basename, splitext
+
+from Bio import SeqIO
+from dict_trie import Trie
 from jit_open import JITOpen
 
-from .fastools import guess_file_format
+from .fastools import guess_file_format, guess_header_format
 from .peeker import Peeker
-from . import version
+from . import doc_split, version
 
 
-def guess_header_format(handle):
-    """
-    Guess the header format.
-
-    :arg stream handle: Open readable handle to an NGS data file.
-
-    :return str: Either 'normal', 'x' or 'unknown'.
-    """
-    if handle.name != '<stdin>':
-        line = handle.readline().strip('\n')
-        handle.seek(0)
-    else:
-        line = handle.peek(1024).split('\n')[0]
-
-    if line.count('#') == 1 and line.split('#')[1].count('/') == 1:
-        return 'normal'
-    if line.count(' ') == 1 and line.split(' ')[1].count(':') == 3:
-        return 'x'
-    return 'unknown'
+_get_barcode = {
+    'normal' : lambda record: record.id.split('#')[1].split('/')[0],
+    'x': lambda record: record.description.split(':')[-1],
+    'unknown': lambda record: record.seq}
 
 
-class Demultiplex(object):
-    """
-    Demultiplex an NGS data file.
-    """
-    def __init__(
-            self, handle, barcodes, mismatch, amount, size, loc, read, dual,
-            f):
+class Extractor(object):
+    def __init__(self, handle, location='', start=None, end=None):
         """
-        Initialise the class.
-
-        :arg stream handle: Open readable handle to an NGS data file.
-        :arg stream barcodes: Open readable handle to a file containing
-            barcodes.
-        :arg int mismatch: Number of allowed mismatches in the barcodes.
-        :arg int amount: Number of barcodes.
-        :arg int size: Number of records to probe.
-        :arg tuple(int, int) loc: Location of the barcode in a read.
-        :arg tuple(int, int) read: Location of the read.
-        :art int dual: Dual barcoding selection (0=disabled, 1=first,
-            2=second).
-        :arg function f: A pairwise distance function.
         """
-        self._handle = handle
-        self._mismatch = mismatch
-        self._location = list(loc)
-        self._read = list(read)
-        self._names = []
-        self._dual = dual
-        self._f = f
-        self._file_format = guess_file_format(handle)
+        self._start = start
+        self._end = end
 
-        if dual:
-            if dual == 1:
-                self._get_barcode = self._get_barcode_from_header_x_dual_1
-            else:
-                self._get_barcode = self._get_barcode_from_header_x_dual_2
-        elif not loc:
-            # No location is given, we need to get the barcodes from the
-            # header.
-            header_format = guess_header_format(handle)
-            if header_format == 'normal':
-                self._get_barcode = self._get_barcode_from_header
-            elif header_format == 'x':
-                self._get_barcode = self._get_barcode_from_header_x
-            else:
-                raise ValueError('header format not recognised')
+        self._location = location
+        if not self._location:
+            self._get_barcode = _get_barcode[guess_header_format(handle)]
+
+    def get(self, record):
+        return self._get_barcode(record)[self._start:self._end]
+
+
+def count(handle, extractor, sample_size, threshold, use_freq=False):
+    """
+    """
+    barcodes = defaultdict(int)
+
+    for i, record in enumerate(SeqIO.parse(handle, guess_file_format(handle))):
+        if i > sample_size:
+            break
+        barcodes[extractor.get(record)] += 1
+
+    if use_freq:
+        return filter(lambda x: barcodes[x] >= threshold, barcodes)
+    return sorted(barcodes, key=barcodes.get, reverse=True)[:threshold]
+
+
+def _open_files(filenames, barcode):
+    """
+    """
+    handles = []
+
+    for filename in filenames:
+        base, ext = splitext(basename(filename))
+        handles.append(JITOpen('{}_{}{}'.format(base, barcode, ext), 'w'))
+
+    return handles
+
+
+def _write(handles, records, file_format):
+    for i, record in enumerate(records):
+        SeqIO.write(record, handles[i], file_format)
+
+
+def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
+    """
+    """
+    filenames = map(lambda x: x.name, input_handles)
+    default_handles = _open_files(filenames, 'UNKNOWN')
+
+    barcodes = {}
+    for line in barcodes_handle.readlines():
+        name, barcode = line.strip().split()
+        barcodes[barcode] = _open_files(filenames, name)
+
+    trie = Trie(barcodes.keys())
+    distance_function = trie.best_hamming
+    if use_edit:
+        distance_function = trie.best_levenshtein
+
+    file_format = guess_file_format(input_handles[0])
+    readers = map(
+        lambda x: SeqIO.parse(x, file_format), input_handles)
+
+    while True:
+        try:
+            records = map(lambda x: x.next(), readers)
+        except StopIteration:
+            break
+
+        barcode = distance_function(extractor.get(records[0]), mismatch)
+        if barcode:
+            _write(barcodes[barcode], records, file_format)
         else:
-            self._get_barcode = self._get_barcode_from_read
-            self._location[0] -= 1
+            _write(default_handles, records, file_format)
 
-        if not read:
-            # No read selection is done, but if a location is given use the
-            # position afther the location as the start of the selection.
-            if loc:
-                self._read = loc[1], None
-        else:
-            self._read[0] -= 1
 
-        if barcodes:
-            try:
-                self._names, self._barcodes = zip(
-                    *map(lambda x: x.strip().split(), barcodes.readlines()))
-            except ValueError, error:
-                raise ValueError('invalid barcodes file format')
-        else:
-            self._barcodes = self.guess_barcodes(amount, size)
+def guess(
+        input_handle, output_handle, in_read, start, end,
+        sample_size, threshold, use_freq):
+    """
+    Retrieve the most frequent barcodes.
+    """
+    location = 'unknown' if in_read else ''
+    extractor = Extractor(input_handle, location, start, end)
+    barcodes = count(input_handle, extractor, sample_size, threshold, use_freq)
 
-    def _get_barcode_from_header(self, record):
-        """
-        Extract the barcode from the header of a FASTA/FASTQ record.
+    for i, barcode in enumerate(barcodes):
+        output_handle.write('{} {}\n'.format(i + 1, barcode))
 
-        :arg object record: Fastq record.
 
-        :returns tuple(str, object): A tuple containing the barcode and the
-            record.
-        """
-        return record, record.id.split('#')[1].split('/')[0]
-
-    def _get_barcode_from_header_x(self, record):
-        """
-        Extract the barcode from the header of a FASTA/FASTQ record, for files
-        created with a HiSeq X.
-
-        :arg object record: Fastq record.
-
-        :returns tuple(str, object): A tuple containing the barcode and the
-            record.
-        """
-        return record, record.description.split(':')[-1]
-
-    def _get_barcode_from_header_x_dual_1(self, record):
-        """
-        Extract the barcode from the dual barcoded header of a FASTA/FASTQ
-        record, for files created with a HiSeq X.
-
-        :arg object record: Fastq record.
-
-        :returns tuple(str, object): A tuple containing the barcode and the
-            record.
-        """
-        return record, record.description.split(':')[-1].split('+')[0]
-
-    def _get_barcode_from_header_x_dual_2(self, record):
-        return record, record.description.split(':')[-1].split('+')[1]
-
-    def _get_barcode_from_read(self, record):
-        """
-        Extract the barcode from the sequence of a FASTA/FASTQ record.
-
-        :arg object record: Fastq record.
-
-        :returns tuple(str, object): A tuple containing the barcode and the
-            record.
-        """
-        return (
-            record[self._read[0]:self._read[1]],
-            str(record.seq[self._location[0]:self._location[1]]))
-
-    def guess_barcodes(self, amount, size):
-        """
-        Find the most abundant barcodes in a FASTA/FASTQ file.
-
-        After use, the input stream is rewinded.
-
-        :arg int amount: Number of barcodes.
-        :arg int size: Number of records to probe.
-
-        :returns list: List of barcodes.
-        """
-        # TODO: Add an option to select frequent barcodes, e.g., by percentage.
-        barcode = defaultdict(int)
-        records_read = 0
-
-        for record in SeqIO.parse(self._handle, self._file_format):
-            barcode[self._get_barcode(record)[1]] += 1
-
-            if records_read > size:
-                break
-            records_read += 1
-
-        self._handle.seek(0)
-
-        return sorted(barcode, key=barcode.get)[::-1][:amount]
-
-    def demultiplex(self):
-        """
-        Demultiplex a FASTA/FASTQ file.
-        """
-        output_handle = {}
-
-        filename, _, ext = self._handle.name.rpartition('.')
-        default_handle = JITOpen("%s_%s.%s" % (filename, "UNKNOWN", ext), "w")
-
-        # Create the output files in a dictionary indexed by barcode.
-        for index, barcode in enumerate(self._barcodes):
-            name = barcode
-
-            if self._names:
-                name = self._names[index]
-
-            output_handle[barcode] = JITOpen(
-                "%s_%s.%s" % (filename, name, ext), "w")
-
-        for record in SeqIO.parse(self._handle, self._file_format):
-            new_record, barcode = self._get_barcode(record)
-
-            # Find the closest barcode.
-            distance = map(lambda x: self._f(x, barcode), self._barcodes)
-            min_distance = min(distance)
-
-            if min_distance <= self._mismatch:
-                SeqIO.write(
-                    new_record,
-                    output_handle[
-                        self._barcodes[distance.index(min_distance)]],
-                    self._file_format)
-            else:
-                SeqIO.write(new_record, default_handle, self._file_format)
+def demux(
+        input_handles, barcodes_handle, in_read, start, end, mismatch,
+        use_edit):
+    """
+    Demultiplex any number of files given a list of barcodes.
+    """
+    location = 'unknown' if in_read else ''
+    extractor = Extractor(input_handles[0], location, start, end)
+    demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit)
 
 
 def main():
     """
     Main entry point.
     """
-    usage = __doc__.split("\n\n\n")
+    default_str = ' (default: %(default)s)'
+    type_default_str = ' (%(type)s default: %(default)s)'
+
+    common_parser = argparse.ArgumentParser(add_help=False)
+    common_parser.add_argument(
+        '-r', dest='in_read', action='store_true',
+        help='extract the barcodes from the read' + default_str)
+    common_parser.add_argument(
+        '-s', dest='start', type=int, default=None,
+        help='start of the selection' + type_default_str)
+    common_parser.add_argument(
+        '-e', dest='end', type=int, default=None,
+        help='end of the selection' + type_default_str)
+
+    usage = __doc__.split('\n\n\n')
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=usage[0], epilog=usage[1])
+    parser.add_argument('-v', action='version', version=version(parser.prog))
+    subparsers = parser.add_subparsers(dest='subcommand')
 
-    parser.add_argument(
-        'input', metavar='INPUT', type=argparse.FileType('r'),
+    parser_guess = subparsers.add_parser(
+        'guess', parents=[common_parser], description=doc_split(guess))
+    parser_guess.add_argument(
+        'input_handle', metavar='INPUT', type=argparse.FileType('r'),
         help='input file')
-    parser.add_argument(
-        '-b', dest='barcodes', type=argparse.FileType('r'),
-        help='file containing barcodes')
-    parser.add_argument(
-        '-a', dest='amount', type=int, default=12,
-        help='amount of barcodes (%(type)s default: %(default)s)')
-    parser.add_argument(
-        '-s', dest='size', type=int, default=1000000,
-        help='sample size (%(type)s default: %(default)s)')
-    parser.add_argument(
+    parser_guess.add_argument(
+        '-o', dest='output_handle', metavar='OUTPUT',
+        type=argparse.FileType('w'), default=sys.stdout,
+        help='output file (default: <stdout>)')
+    parser_guess.add_argument(
+        '-n', dest='sample_size', type=int, default=1000000,
+        help='sample size' + type_default_str)
+    parser_guess.add_argument(
+        '-f', dest='use_freq', action='store_true',
+        help='select on frequency instead of a fixed amount' + default_str)
+    parser_guess.add_argument(
+        '-t', dest='threshold', type=int, default=12,
+        help='threshold for the selection method' + type_default_str)
+    parser_guess.set_defaults(func=guess)
+
+    parser_demux = subparsers.add_parser(
+        'demux', parents=[common_parser],
+        description=doc_split(demux))
+    parser_demux.add_argument(
+        'barcodes_handle', metavar='BARCODES', type=argparse.FileType('r'),
+        help='barcodes file')
+    parser_demux.add_argument(
+        'input_handles', metavar='INPUT', nargs='+',
+        type=argparse.FileType('r'), help='input files')
+    parser_demux.add_argument(
         '-m', dest='mismatch', type=int, default=1,
-        help='number of mismatches (%(type)s default: %(default)s)')
-    parser.add_argument(
-        '-l', dest='location', type=int, default=[], nargs=2,
-        help='location of the barcode')
-    parser.add_argument(
-        '-r', dest='selection', type=int, default=[], nargs=2,
-        help='selection of the read')
-    parser.add_argument(
-        '-d',  dest='dual', type=int, default=0,
-        help='Select in dual barodes (%(type)s default: $(default)s)')
-    parser.add_argument(
-        '-H', dest='dfunc', default=False, action="store_true",
-        help="use Hamming distance")
-    parser.add_argument('-v', action="version", version=version(parser.prog))
+        help='number of mismatches' + type_default_str)
+    parser_demux.add_argument(
+        '-d', dest='use_edit', action='store_true',
+        help='use Levenshtein distance' + default_str)
+    parser_demux.set_defaults(func=demux)
 
     sys.stdin = Peeker(sys.stdin)
 
-    args = parser.parse_args()
-
-    dfunc = Levenshtein.distance
-    if args.dfunc:
-        dfunc = Levenshtein.hamming
+    try:
+        args = parser.parse_args()
+    except IOError, error:
+        parser.error(error)
 
     try:
-        Demultiplex(
-            args.input, args.barcodes, args.mismatch, args.amount, args.size,
-            args.location, args.selection, args.dual, dfunc).demultiplex()
+        args.func(**{k: v for k, v in vars(args).items()
+            if k not in ('func', 'subcommand')})
     except ValueError, error:
         parser.error(error)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
