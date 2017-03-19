@@ -13,7 +13,7 @@ from os.path import basename, splitext
 
 from Bio import SeqIO
 from dict_trie import Trie
-from jit_open import JITOpen
+from jit_open import Handle, Queue
 
 from .fastools import guess_file_format, guess_header_format
 from .peeker import Peeker
@@ -59,14 +59,14 @@ def count(handle, extractor, sample_size, threshold, use_freq=False):
     return sorted(barcodes, key=barcodes.get, reverse=True)[:threshold]
 
 
-def _open_files(filenames, barcode):
+def _open_files(filenames, barcode, queue):
     """
     """
     handles = []
 
     for filename in filenames:
         base, ext = splitext(basename(filename))
-        handles.append(JITOpen('{}_{}{}'.format(base, barcode, ext), 'w'))
+        handles.append(Handle('{}_{}{}'.format(base, barcode, ext), queue))
 
     return handles
 
@@ -80,7 +80,8 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
     """
     """
     filenames = map(lambda x: x.name, input_handles)
-    default_handles = _open_files(filenames, 'UNKNOWN')
+    queue = Queue()
+    default_handles = _open_files(filenames, 'UNKNOWN', queue)
 
     barcodes = {}
     for line in barcodes_handle.readlines():
@@ -88,7 +89,7 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
             name, barcode = line.strip().split()
         except ValueError:
             raise ValueError('invalid barcodes file format')
-        barcodes[barcode] = _open_files(filenames, name)
+        barcodes[barcode] = _open_files(filenames, name, queue)
 
     trie = Trie(barcodes.keys())
     distance_function = trie.best_hamming
