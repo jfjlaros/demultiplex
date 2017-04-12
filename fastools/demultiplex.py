@@ -1,5 +1,4 @@
-"""
-Split FASTA/FASTQ files on barcode.
+"""Split FASTA/FASTQ files on barcode.
 
 
 Format of the barcode file:
@@ -27,8 +26,13 @@ _get_barcode = {
 
 
 class Extractor(object):
-    def __init__(self, handle, location='', start=None, end=None):
-        """
+    def __init__(self, handle, in_read=False, start=None, end=None):
+        """Configure a barcode extractor.
+
+        :arg stream handle: Handle to an NGS data file.
+        :arg bool in_read: Inspect the read instead of the header.
+        :arg int start: Start of the barcode.
+        :arg int end: End of the barcode.
         """
         self._start = start
         self._end = end
@@ -37,7 +41,7 @@ class Extractor(object):
             self._start -= 1
 
         self._get_barcode = _get_barcode['unknown']
-        if not location:
+        if not in_read:
             self._get_barcode = _get_barcode[guess_header_format(handle)]
 
     def get(self, record):
@@ -45,7 +49,15 @@ class Extractor(object):
 
 
 def count(handle, extractor, sample_size, threshold, use_freq=False):
-    """
+    """Get the most frequent barcodes from an NGS data file.
+
+    :arg stream handle: Handle to an NGS data file.
+    :arg Extractor extractor: A barcode extractor.
+    :arg int sample_size: Number of records to probe.
+    :arg int threshold: Threshold for the selection method.
+    :arg bool use_freq: Select frequent barcodes instead of a fixed amount.
+
+    :returns list: A list of barcodes.
     """
     barcodes = defaultdict(int)
 
@@ -60,7 +72,13 @@ def count(handle, extractor, sample_size, threshold, use_freq=False):
 
 
 def _open_files(filenames, barcode, queue):
-    """
+    """For a list of input files, open the corresponding output files.
+
+    :arg list filename: List of input filenames.
+    :arg str barcode: Name of the barcode.
+    :arg Queue queue: Queue for open files.
+
+    :returns list: List of handles of output files.
     """
     handles = []
 
@@ -77,7 +95,13 @@ def _write(handles, records, file_format):
 
 
 def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
-    """
+    """Demultiplex a list of NGS data files.
+
+    :arg list input_handles: List of hanles to NGS data files.
+    :arg stream barcodes_handle: Handle to a file containing barcodes.
+    :arg Extractor extractor: A barcode extractor.
+    :arg int mismatch: Number of allowed mismatches.
+    :arg bool use_edit: Use Levenshtein distance instead of Hamming distance.
     """
     filenames = map(lambda x: x.name, input_handles)
     queue = Queue()
@@ -116,11 +140,9 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
 def guess(
         input_handle, output_handle, in_read, start, end,
         sample_size, threshold, use_freq):
+    """Retrieve the most frequent barcodes.
     """
-    Retrieve the most frequent barcodes.
-    """
-    location = 'unknown' if in_read else ''
-    extractor = Extractor(input_handle, location, start, end)
+    extractor = Extractor(input_handle, in_read, start, end)
     barcodes = count(input_handle, extractor, sample_size, threshold, use_freq)
 
     for i, barcode in enumerate(barcodes):
@@ -130,17 +152,14 @@ def guess(
 def demux(
         input_handles, barcodes_handle, in_read, start, end, mismatch,
         use_edit):
+    """Demultiplex any number of files given a list of barcodes.
     """
-    Demultiplex any number of files given a list of barcodes.
-    """
-    location = 'unknown' if in_read else ''
-    extractor = Extractor(input_handles[0], location, start, end)
+    extractor = Extractor(input_handles[0], in_read, start, end)
     demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit)
 
 
 def main():
-    """
-    Main entry point.
+    """Main entry point.
     """
     default_str = ' (default: %(default)s)'
     type_default_str = ' (%(type)s default: %(default)s)'
