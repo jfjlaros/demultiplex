@@ -136,6 +136,8 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
         else:
             _write(default_handles, records, file_format)
 
+    queue.flush()
+
 
 def guess(
         input_handle, output_handle, in_read, start, end,
