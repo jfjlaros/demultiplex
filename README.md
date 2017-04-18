@@ -57,11 +57,12 @@ In bother cases, sequences larger than 25 are written to the `large` file, the
 other sequences are written to the `small` file.
 
 ## `demultiplex`
-The `demultiplex` command provides several ways to demultiplex a FASTA or a
-FASTQ file based on a list of barcodes. This list can either be provided via a
-file or guessed from the data. The demultiplexer can be set to search for the
-barcodes in the header, or in the read itself. To allow for mismatches, two
-distance functions (edit distance and Hamming distance) are available.
+The `demultiplex` program provides several ways to demultiplex any number of
+FASTA or a FASTQ files based on a list of barcodes. This list can either be
+provided via a file or guessed from the data. The demultiplexer can be set to
+search for the barcodes in the header, or in the read itself. To allow for
+mismatches, two distance functions (edit distance and Hamming distance) are
+available.
 
 ### Illumina FASTQ files
 For Illumina FASTQ files, the barcodes can usually be found in the header of
@@ -69,8 +70,8 @@ each FASTQ record. Currently, the `demultiplex` program supports two types of
 headers, the classical Illumina headers and the newer HiSeq X headers. These
 headers are detected automatically.
 
-The most common way to demultiplex is by providing a list of barcodes. The
-barcodes file is formatted as follows:
+Demultiplexing is done with the `demux` subcommand by providing a list of
+barcodes. The barcodes file is formatted as follows:
 
     name sequence
 
@@ -79,46 +80,51 @@ So a typical barcodes file might look like this:
     index1 ACGTAA
     index2 GTAAGG
 
-To use this to demultiplex a FASTQ file, where we assume that the barcode can
-be found in the header, we use the following command:
+To use this to demultiplex two FASTQ files, where we assume that the barcode
+can be found in the header of the first file, we use the following command:
 
-    demultiplex -b barcodes.csv file.fq
+    demultiplex demux barcodes.csv file_1.fq file_2.fq
 
-This will generate three files:
+This will generate six files:
 
-    file_index1.fq
-    file_index2.fq
-    file_UNKNOWN.fq
+    file_1_index1.fq
+    file_2_index1.fq
+    file_1_index2.fq
+    file_2_index2.fq
+    file_1_UNKNOWN.fq
+    file_2_UNKNOWN.fq
 
-the first two files will contain records assigned to index1 and index2, the
-last one will contain anything that could not be assigned. 
+the first four files will contain records assigned to index1 and index2, the
+last two will contain anything that could not be assigned.
 
-If the list of barcodes is not known beforehand, the `demultiplex` program can
-be told to search for a top list of barcodes. This procedure is controlled via
-the `-a` and `-s` options. For example, if we want to search for the top five
-barcodes in the first 1000 records, we use the following:
+If the list of barcodes is not known beforehand, the `guess` subcommand can be
+used to search for a top list of barcodes. For example, if we want to search
+for the top five barcodes in the first 1000 records, we use the following:
 
-    demultiplex -a 5 -s 1000 file.fq
+    demultiplex guess -o barcodes.csv -t 5 -n 1000 file.fq
 
-In this case, six files will be created, the first five containing records
-assigned to the top five barcodes and one file containing the unassigned
-records. Since no name is provided, the files will have the barcode sequence in
-their filename, e.g.,
+This will generate the barcodes file that can be used for the `demux`
+subcommand.
 
-    file_ACGTAA.fq
+If the number of barcodes is not known beforehand, an alternative selection
+method can be used which selects all barcodes with a minimum number of
+occurrences. The following command will generate a barcode file of all barcodes
+that occur at least five times in the first 1000 reads:
+
+    demultiplex guess -o barcodes.csv -f -t 5 -n 1000 file.fq
 
 ### Other files
-For platforms other than Illumina, barcodes sometimes end up at a specific
-location in each read. In this case, demultiplexing is a combination of
-selecting the barcode and removing this from the actual data. This can be done
-with the `-l` and `-r` options. For example, if we want to search for barcodes
-in the first six nucleotides of a read and want to save positions from ten to
-twenty, we use the following command:
+For platforms other than Illumina, or for alternative sequencing runs, like
+those coming from 10X experiments, barcodes sometimes end up at a specific
+location in each read. It can also be that the barcode is in the header, but
+only part of this barcode is used, this happens when dual indexing is used for
+example. To deal with these cases, both the `quess` as well as the `demux`
+subcommand can be instructed to look voor the barcode in the read with the `-r`
+option and a selection can be made by providing a start- and end coordinate
+via the `-s` and `-e` options. For example, if we want to search for barcodes
+in the first six nucleotides of a read, we use the following command:
 
-    demultiplex -b barcodes.csv -l 1 6 -r 10 20 file.fq
-
-By default, if the `-r` option is omitted, everything after the barcode is
-selected.
+    demultiplex demux -r -e 6 barcodes.csv file.fq
 
 ## `split_fasta`
 The `split_fasta` program splits a FASTA file based on the occurrence of
