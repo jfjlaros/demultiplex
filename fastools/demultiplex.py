@@ -6,16 +6,14 @@ name barcode
 """
 import argparse
 import sys
-
 from collections import defaultdict
 from os.path import basename, splitext
 
 from Bio import SeqIO
 from dict_trie import Trie
+from fastools import guess_file_format, guess_header_format, Peeker
 from jit_open import Handle, Queue
 
-from .fastools import guess_file_format, guess_header_format
-from .peeker import Peeker
 from . import doc_split, version
 
 
