@@ -1,3 +1,4 @@
+import os
 import sys
 from setuptools import setup
 
@@ -5,7 +6,7 @@ if sys.version_info < (2, 6):
     raise Exception('demultiplex requires Python 2.6 or higher.')
 
 # Todo: How does this play with pip freeze requirement files?
-requires = ['biopython', 'dict-trie', 'jit-open']
+requires = ['biopython', 'dict-trie', 'fastools', 'jit-open']
 
 # Python 2.6 does not include the argparse module.
 try:
@@ -13,23 +14,43 @@ try:
 except ImportError:
     requires.append('argparse')
 
-import demultiplex as distmeta
+# This is quite the hack, but we don't want to import our package from here
+# since that's recipe for disaster (it might have some uninstalled
+# dependencies, or we might import another already installed version).
+distmeta = {}
+for line in open(os.path.join('demultiplex', '__init__.py')):
+    try:
+        field, value = (x.strip() for x in line.split('='))
+    except ValueError:
+        continue
+    if field == '__version_info__':
+        value = value.strip('[]()')
+        value = '.'.join(x.strip(' \'"') for x in value.split(','))
+    else:
+        value = value.strip('\'"')
+    distmeta[field] = value
+
+try:
+    with open('README.md') as readme:
+        long_description = readme.read()
+except IOError:
+    long_description = 'See ' + distmeta['__homepage__']
 
 setup(
     name='demultiplex',
-    version=distmeta.__version__,
+    version=distmeta['__version__'],
     description='FASTA/FASTQ analysis and manipulation toolkit.',
-    long_description=distmeta.__doc__,
-    author=distmeta.__author__,
-    author_email=distmeta.__contact__,
-    url=distmeta.__homepage__,
+    long_description=readme,
+    author=distmeta['__author__'],
+    author_email=distmeta['__contact__'],
+    url=distmeta['__homepage__'],
     license='MIT License',
     platforms=['any'],
     packages=['demultiplex'],
     install_requires=requires,
     entry_points = {
         'console_scripts': [
-            'demultiplex = demultiplex.demultiplex:main'
+            'demultiplex = demultiplex.cli:main'
         ]
     },
     classifiers = [
