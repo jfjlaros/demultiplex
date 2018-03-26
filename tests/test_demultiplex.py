@@ -1,7 +1,8 @@
 """Tests for demultiplex."""
 from StringIO import StringIO
 
-from demultiplex import demultiplex
+from demultiplex import cli
+from fastools import guess_header_format
 from jit_open import jit_open
 
 from shared import FakeOpen, md5_check, make_fake_file
@@ -24,16 +25,14 @@ class TestCLI(object):
         """
         """
         fake_file = StringIO()
-        demultiplex.guess(
-            self._input, fake_file, True, 2, 5, 1000000, 4, False)
+        cli.guess(self._input, fake_file, True, 2, 5, 1000000, 4, False)
         assert fake_file.getvalue() == '1 TTTT\n2 AAAA\n3 CCCC\n4 GGGG\n'
 
     def test_x_amount(self):
         """
         """
         fake_file = StringIO()
-        demultiplex.guess(
-            self._input, fake_file, False, None, None, 1000000, 1, False)
+        cli.guess(self._input, fake_file, False, None, None, 1000000, 1, False)
         assert fake_file.getvalue() == '1 ACTT\n'
 
     def test_from_file_mismatch_0(self):
@@ -41,8 +40,7 @@ class TestCLI(object):
 
         Result: file 1, 3 and UNKNOWN contain one read, file 4 contains two.
         """
-        demultiplex.demux(
-            [self._input], self._barcodes, False, None, None, 0, True)
+        cli.demux([self._input], self._barcodes, False, None, None, 0, True)
         assert len(self._handles) == 4
         assert self._md5_check(
             'demultiplex_UNKNOWN.fq', '7a2889d04b4e8514ca01ea6c75884cd6')
@@ -53,8 +51,7 @@ class TestCLI(object):
         Result: file 1-3 contain one read, file 4 contains two and UNKNOWN is
         empty. Notably file 2 is not empty although the barcode is shorter.
         """
-        demultiplex.demux(
-            [self._input], self._barcodes, False, None, None, 1, True)
+        cli.demux([self._input], self._barcodes, False, None, None, 1, True)
         assert len(self._handles) == 4
         assert self._md5_check(
             'demultiplex_2.fq', '7a2889d04b4e8514ca01ea6c75884cd6')
@@ -65,8 +62,7 @@ class TestCLI(object):
         Result: file 1-3 contain one sequence, file 4 contains two and UNKNOWN
         is empty.
         """
-        demultiplex.demux(
-            [self._input_x], self._barcodes, False, None, None, 0, True)
+        cli.demux([self._input_x], self._barcodes, False, None, None, 0, True)
         assert len(self._handles) == 4
         assert self._md5_check(
             'demultiplex_x_1.fq', '3f013cddfedf1b5b1ad5d01913692333')
@@ -76,17 +72,16 @@ class TestCLI(object):
     def test_wrong_barcode_format(self):
         handle = make_fake_file('', 'ACTA\nACTC\nACTG\nACTT\n')
         try:
-            demultiplex.demux(
-                [self._input], handle, False, None, None, 0, False)
+            cli.demux([self._input], handle, False, None, None, 0, False)
         except ValueError, error:
             assert error[0] == 'invalid barcodes file format'
 
     def test_guess_header_normal(self):
-        assert demultiplex.guess_header_format(self._input) == 'normal'
+        assert guess_header_format(self._input) == 'normal'
 
     def test_guess_header_x(self):
-        assert demultiplex.guess_header_format(self._input_x) == 'x'
+        assert guess_header_format(self._input_x) == 'x'
 
     def test_guess_header_unknown(self):
-        assert demultiplex.guess_header_format(
+        assert guess_header_format(
             make_fake_file('', '@name description\n')) == 'unknown'
