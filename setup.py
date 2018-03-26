@@ -2,10 +2,10 @@ import sys
 from setuptools import setup
 
 if sys.version_info < (2, 6):
-    raise Exception('fastools requires Python 2.6 or higher.')
+    raise Exception('demultiplex requires Python 2.6 or higher.')
 
 # Todo: How does this play with pip freeze requirement files?
-requires = ['biopython', 'dict-trie', 'fastools', 'jit-open']#, 'python-Levenshtein']
+requires = ['biopython', 'dict-trie', 'jit-open']
 
 # Python 2.6 does not include the argparse module.
 try:
@@ -13,10 +13,10 @@ try:
 except ImportError:
     requires.append('argparse')
 
-import fastools as distmeta
+import demultiplex as distmeta
 
 setup(
-    name='fastools',
+    name='demultiplex',
     version=distmeta.__version__,
     description='FASTA/FASTQ analysis and manipulation toolkit.',
     long_description=distmeta.__doc__,
@@ -25,13 +25,11 @@ setup(
     url=distmeta.__homepage__,
     license='MIT License',
     platforms=['any'],
-    packages=['fastools'],
+    packages=['demultiplex'],
     install_requires=requires,
     entry_points = {
         'console_scripts': [
-            'fastools = fastools.fastools:main',
-            'demultiplex = fastools.demultiplex:main',
-            'split_fasta = fastools.split_fasta:main'
+            'demultiplex = demultiplex.demultiplex:main'
         ]
     },
     classifiers = [

@@ -19,8 +19,7 @@ class FakeOpen(object):
         self.handles = {}
 
     def open(self, name, attr=''):
-        """
-        Open a fake file.
+        """Open a fake file.
         
         This handle can not be closed because we want to inspect the content
         even after close() was called.

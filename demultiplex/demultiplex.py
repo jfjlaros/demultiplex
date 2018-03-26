@@ -140,8 +140,7 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
 def guess(
         input_handle, output_handle, in_read, start, end,
         sample_size, threshold, use_freq):
-    """Retrieve the most frequent barcodes.
-    """
+    """Retrieve the most frequent barcodes."""
     extractor = Extractor(input_handle, in_read, start, end)
     barcodes = count(input_handle, extractor, sample_size, threshold, use_freq)
 
@@ -152,15 +151,13 @@ def guess(
 def demux(
         input_handles, barcodes_handle, in_read, start, end, mismatch,
         use_edit):
-    """Demultiplex any number of files given a list of barcodes.
-    """
+    """Demultiplex any number of files given a list of barcodes."""
     extractor = Extractor(input_handles[0], in_read, start, end)
     demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit)
 
 
 def main():
-    """Main entry point.
-    """
+    """Main entry point."""
     default_str = ' (default: %(default)s)'
     type_default_str = ' (%(type)s default: %(default)s)'
 

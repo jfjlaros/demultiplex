@@ -1,9 +1,7 @@
-"""
-Tests for demultiplex.
-"""
+"""Tests for demultiplex."""
 from StringIO import StringIO
 
-from fastools import demultiplex
+from demultiplex import demultiplex
 from jit_open import jit_open
 
 from shared import FakeOpen, md5_check, make_fake_file

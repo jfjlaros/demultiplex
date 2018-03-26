@@ -1,6 +1,7 @@
 *.pyc
 *.swp
-.cache
-build
-dist
-fastools.egg-info
+.cache/
+.pytest_cache/
+build/
+dist/
+demultiplex.egg-info/
