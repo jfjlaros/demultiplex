@@ -38,9 +38,9 @@ except IOError:
 
 setup(
     name='demultiplex',
-    version=distmeta['__version__'],
-    description='FASTA/FASTQ analysis and manipulation toolkit.',
-    long_description=readme,
+    version=distmeta['__version_info__'],
+    description='FASTA/FASTQ demultiplexer.',
+    long_description=long_description,
     author=distmeta['__author__'],
     author_email=distmeta['__contact__'],
     url=distmeta['__homepage__'],
