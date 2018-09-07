@@ -1,26 +1,19 @@
-"""demultiplex: Demultiplex any number of FASTA or a FASTQ files based on a
-list of barcodes.
+from os.path import dirname, abspath
 
+from configparser import ConfigParser
 
-Format of the barcode file:
-name barcode
-
-Copyright (c) 2015 Leiden University Medical Center <humgen@lumc.nl>
-Copyright (c) 2015 Jeroen F.J. Laros <J.F.J.Laros@lumc.nl>
-
-Licensed under the MIT license, see the LICENSE file.
-"""
 from .demultiplex import Extractor, count, demultiplex
 
 
-__version_info__ = ('0', '1', '1')
+config = ConfigParser()
+config.readfp(open('{}/setup.cfg'.format(dirname(abspath(__file__)))))
 
-__version__ = '.'.join(__version_info__)
-__author__ = 'Jeroen F.J. Laros'
-__contact__ = 'J.F.J.Laros@lumc.nl'
-__homepage__ = 'https://github.com/jfjlaros/demultiplex'
+_copyright_notice = 'Copyright (c) {} {} <{}>'.format(
+    config.get('metadata', 'copyright'),
+    config.get('metadata', 'author'),
+    config.get('metadata', 'author_email'))
 
-usage = __doc__.split('\n\n\n')
+usage = [config.get('metadata', 'description'), _copyright_notice]
 
 
 def doc_split(func):
@@ -28,5 +21,8 @@ def doc_split(func):
 
 
 def version(name):
-    return '{} version {}\n\nAuthor   : {} <{}>\nHomepage : {}'.format(
-        name, __version__, __author__, __contact__, __homepage__)
+    return '{} version {}\n\n{}\nHomepage: {}'.format(
+        config.get('metadata', 'name'),
+        config.get('metadata', 'version'),
+        _copyright_notice,
+        config.get('metadata', 'url'))
