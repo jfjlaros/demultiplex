@@ -1,5 +1,5 @@
 """Tests for demultiplex."""
-from StringIO import StringIO
+from io import StringIO
 
 from demultiplex import cli
 from fastools import guess_header_format
@@ -22,15 +22,11 @@ class TestCLI(object):
         return md5_check(self._handles[name].getvalue(), md5sum)
 
     def test_amount_read(self):
-        """
-        """
         fake_file = StringIO()
         cli.guess(self._input, fake_file, True, 2, 5, 1000000, 4, False)
-        assert fake_file.getvalue() == '1 TTTT\n2 AAAA\n3 CCCC\n4 GGGG\n'
+        assert fake_file.getvalue() == '1 AAAA\n2 CCCC\n3 GGGG\n4 TTTT\n'
 
     def test_x_amount(self):
-        """
-        """
         fake_file = StringIO()
         cli.guess(self._input, fake_file, False, None, None, 1000000, 1, False)
         assert fake_file.getvalue() == '1 ACTT\n'
@@ -73,8 +69,8 @@ class TestCLI(object):
         handle = make_fake_file('', 'ACTA\nACTC\nACTG\nACTT\n')
         try:
             cli.demux([self._input], handle, False, None, None, 0, False)
-        except ValueError, error:
-            assert error[0] == 'invalid barcodes file format'
+        except ValueError as error:
+            assert str(error) == 'invalid barcodes file format'
 
     def test_guess_header_normal(self):
         assert guess_header_format(self._input) == 'normal'

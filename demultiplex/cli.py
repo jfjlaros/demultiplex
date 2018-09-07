@@ -14,7 +14,7 @@ def guess(
     extractor = Extractor(input_handle, in_read, start, end)
     barcodes = count(input_handle, extractor, sample_size, threshold, use_freq)
 
-    for i, barcode in enumerate(barcodes):
+    for i, barcode in enumerate(sorted(barcodes)):
         output_handle.write('{} {}\n'.format(i + 1, barcode))
 
 
@@ -47,6 +47,7 @@ def main():
         description=usage[0], epilog=usage[1])
     parser.add_argument('-v', action='version', version=version(parser.prog))
     subparsers = parser.add_subparsers(dest='subcommand')
+    subparsers.required = True
 
     parser_guess = subparsers.add_parser(
         'guess', parents=[common_parser], description=doc_split(guess))
@@ -89,13 +90,13 @@ def main():
 
     try:
         args = parser.parse_args()
-    except IOError, error:
+    except IOError as error:
         parser.error(error)
 
     try:
         args.func(**{k: v for k, v in vars(args).items()
             if k not in ('func', 'subcommand')})
-    except ValueError, error:
+    except ValueError as error:
         parser.error(error)
 
 

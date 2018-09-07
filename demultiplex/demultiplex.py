@@ -91,7 +91,7 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
     :arg int mismatch: Number of allowed mismatches.
     :arg bool use_edit: Use Levenshtein distance instead of Hamming distance.
     """
-    filenames = map(lambda x: x.name, input_handles)
+    filenames = list(map(lambda x: x.name, input_handles))
     queue = Queue()
     default_handles = _open_files(filenames, 'UNKNOWN', queue)
 
@@ -109,13 +109,12 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
         distance_function = trie.best_levenshtein
 
     file_format = guess_file_format(input_handles[0])
-    readers = map(
-        lambda x: SeqIO.parse(x, file_format), input_handles)
+    readers = list(map(
+        lambda x: SeqIO.parse(x, file_format), input_handles))
 
     while True:
-        try:
-            records = map(lambda x: x.next(), readers)
-        except StopIteration:
+        records = list(map(lambda x: next(x), readers))
+        if not records:
             break
 
         barcode = distance_function(extractor.get(records[0]), mismatch)
