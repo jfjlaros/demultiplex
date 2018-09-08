@@ -8,6 +8,7 @@ search for the barcodes in the header, or in the read itself. To allow for
 mismatches, two distance functions (edit distance and Hamming distance) are
 available.
 
+
 Illumina FASTQ files
 --------------------
 
@@ -71,6 +72,7 @@ that occur at least five times in the first 1000 reads:
 
     demultiplex guess -o barcodes.csv -f -t 5 -n 1000 file.fq
 
+
 Other files
 -----------
 
@@ -88,3 +90,36 @@ command:
 ::
 
     demultiplex demux -r -e 6 barcodes.csv file.fq
+
+
+Multiple barcodes
+-----------------
+
+Suppose we have two files containing barcodes that are used for dual indexing:
+
+- ``A.txt`` for barcode 1 and 2.
+- ``B.txt`` for barcode 3 and 4.
+
+Furthermore, suppose that the first barcode can be found in the header of read
+1 and the second one in the header of read 2.
+
+We can then demultiplex in two steps:
+
+    demultiplex demux A.txt read_1.fq read_2.fq
+
+This will result in two new pairs of files:
+
+- ``read_1_1.fq``, ``read_2_1.fq``
+- ``read_1_2.fq``, ``read_2_2.fq``
+
+We can now demultiplex each of these pairs as follows:
+
+    demultiplex demux B.txt read_2_1.fq read_1_1.fq
+    demultiplex demux B.txt read_2_2.fq read_1_2.fq
+
+Which will result in the final list of pairs: 
+
+- ``read_1_1_3.fq``, ``read_2_1_3.fq``
+- ``read_1_1_4.fq``, ``read_2_1_4.fq``
+- ``read_1_2_3.fq``, ``read_2_2_3.fq``
+- ``read_1_2_4.fq``, ``read_2_2_4.fq``
