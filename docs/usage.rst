@@ -105,6 +105,8 @@ Furthermore, suppose that the first barcode can be found in the header of read
 
 We can then demultiplex in two steps:
 
+::
+
     demultiplex demux A.txt read_1.fq read_2.fq
 
 This will result in two new pairs of files:
@@ -113,6 +115,8 @@ This will result in two new pairs of files:
 - ``read_1_2.fq``, ``read_2_2.fq``
 
 We can now demultiplex each of these pairs as follows:
+
+::
 
     demultiplex demux B.txt read_2_1.fq read_1_1.fq
     demultiplex demux B.txt read_2_2.fq read_1_2.fq
