@@ -10,7 +10,7 @@ from jit_open import Handle, Queue
 _get_barcode = {
     'normal' : lambda record: record.id.split('#')[1].split('/')[0],
     'x': lambda record: record.description.split(':')[-1],
-    'unknown': lambda record: record.seq}
+    'unknown': lambda record: str(record.seq)}
 
 
 class Extractor(object):

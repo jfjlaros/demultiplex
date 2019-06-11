@@ -6,7 +6,8 @@ from .demultiplex import Extractor, count, demultiplex
 
 
 config = ConfigParser()
-config.readfp(open('{}/setup.cfg'.format(dirname(abspath(__file__)))))
+with open('{}/setup.cfg'.format(dirname(abspath(__file__)))) as handle:
+    config.read_file(handle)
 
 _copyright_notice = 'Copyright (c) {} {} <{}>'.format(
     config.get('metadata', 'copyright'),
