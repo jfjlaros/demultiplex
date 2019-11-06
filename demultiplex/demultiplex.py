@@ -2,9 +2,12 @@ from collections import defaultdict
 from os.path import basename, splitext
 
 from Bio import SeqIO
+from Bio.Seq import reverse_complement
 from dict_trie import Trie
 from fastools import guess_file_format, guess_header_format
 from jit_open import Handle, Queue
+
+from .match import multi_align
 
 
 _get_barcode = {
@@ -85,7 +88,7 @@ def _write(handles, records, file_format):
 def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
     """Demultiplex a list of NGS data files.
 
-    :arg list input_handles: List of hanles to NGS data files.
+    :arg list input_handles: List of handles to NGS data files.
     :arg stream barcodes_handle: Handle to a file containing barcodes.
     :arg Extractor extractor: A barcode extractor.
     :arg int mismatch: Number of allowed mismatches.
@@ -122,5 +125,53 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
             _write(barcodes[barcode], records, file_format)
         else:
             _write(default_handles, records, file_format)
+
+    queue.flush()
+
+
+def match(input_handle, barcodes_handle, mismatch, use_edit):
+    """Demultiplex a list of NGS data files.
+
+    :arg list input_handle: Handle to NGS an data file.
+    :arg stream barcodes_handle: Handle to a file containing barcodes.
+    :arg int mismatch: Number of allowed mismatches.
+    :arg bool use_edit: Use Levenshtein distance instead of Hamming distance.
+    """
+    filename = input_handle.name
+    queue = Queue()
+    default_handles = _open_files([filename], 'UNKNOWN', queue)
+
+    barcodes = []
+    for line in map(lambda x: x.strip().split(), barcodes_handle.readlines()):
+        try:
+            name = line.pop(0)
+        except ValueError:
+            raise ValueError('invalid barcodes file format')
+        barcodes.append((_open_files([filename], name, queue), line))
+
+    file_format = guess_file_format(input_handle)
+    reader = SeqIO.parse(input_handle, file_format)
+
+    for record in reader:
+        reference = str(record.seq)
+        reference_rc = reverse_complement(reference)
+
+        indel_score = 1
+        if not use_edit:
+            indel_score = len(reference)
+
+        found = False
+        for handles, barcode in barcodes:
+            if multi_align(reference, barcode, mismatch, indel_score):
+                _write(handles, [record], file_format)
+                found = True
+                continue
+            elif multi_align(reference_rc, barcode, mismatch, indel_score):
+                _write(handles, [record], file_format)
+                found = True
+                continue
+
+        if not found:
+            _write(default_handles, [record], file_format)
 
     queue.flush()

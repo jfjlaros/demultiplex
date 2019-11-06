@@ -4,7 +4,7 @@ import sys
 from fastools import Peeker
 
 from . import doc_split, usage, version
-from .demultiplex import Extractor, count, demultiplex
+from .demultiplex import Extractor, count, demultiplex, match
 
 
 def guess(
@@ -24,6 +24,11 @@ def demux(
     """Demultiplex any number of files given a list of barcodes."""
     extractor = Extractor(input_handles[0], in_read, start, end)
     demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit)
+
+
+def bcmatch(input_handle, barcodes_handle, mismatch, use_edit):
+    """Demultiplex one file given a list of barcode tuples."""
+    match(input_handle, barcodes_handle, mismatch, use_edit)
 
 
 def main():
@@ -49,42 +54,57 @@ def main():
     subparsers = parser.add_subparsers(dest='subcommand')
     subparsers.required = True
 
-    parser_guess = subparsers.add_parser(
+    subparser = subparsers.add_parser(
         'guess', parents=[common_parser], description=doc_split(guess))
-    parser_guess.add_argument(
+    subparser.add_argument(
         'input_handle', metavar='INPUT', type=argparse.FileType('r'),
         help='input file')
-    parser_guess.add_argument(
+    subparser.add_argument(
         '-o', dest='output_handle', metavar='OUTPUT',
         type=argparse.FileType('w'), default=sys.stdout,
         help='output file (default: <stdout>)')
-    parser_guess.add_argument(
+    subparser.add_argument(
         '-n', dest='sample_size', type=int, default=1000000,
         help='sample size' + type_default_str)
-    parser_guess.add_argument(
+    subparser.add_argument(
         '-f', dest='use_freq', action='store_true',
         help='select on frequency instead of a fixed amount' + default_str)
-    parser_guess.add_argument(
+    subparser.add_argument(
         '-t', dest='threshold', type=int, default=12,
         help='threshold for the selection method' + type_default_str)
-    parser_guess.set_defaults(func=guess)
+    subparser.set_defaults(func=guess)
 
-    parser_demux = subparsers.add_parser(
+    subparser = subparsers.add_parser(
         'demux', parents=[common_parser],
         description=doc_split(demux))
-    parser_demux.add_argument(
+    subparser.add_argument(
         'barcodes_handle', metavar='BARCODES', type=argparse.FileType('r'),
         help='barcodes file')
-    parser_demux.add_argument(
+    subparser.add_argument(
         'input_handles', metavar='INPUT', nargs='+',
         type=argparse.FileType('r'), help='input files')
-    parser_demux.add_argument(
+    subparser.add_argument(
         '-m', dest='mismatch', type=int, default=1,
         help='number of mismatches' + type_default_str)
-    parser_demux.add_argument(
+    subparser.add_argument(
         '-d', dest='use_edit', action='store_true',
         help='use Levenshtein distance' + default_str)
-    parser_demux.set_defaults(func=demux)
+    subparser.set_defaults(func=demux)
+
+    subparser = subparsers.add_parser('match', description=doc_split(bcmatch))
+    subparser.add_argument(
+        'barcodes_handle', metavar='BARCODES', type=argparse.FileType('r'),
+        help='barcodes file')
+    subparser.add_argument(
+        'input_handle', metavar='INPUT', type=argparse.FileType('r'),
+        help='input file')
+    subparser.add_argument(
+        '-m', dest='mismatch', type=int, default=1,
+        help='number of mismatches' + type_default_str)
+    subparser.add_argument(
+        '-d', dest='use_edit', action='store_true',
+        help='use Levenshtein distance' + default_str)
+    subparser.set_defaults(func=bcmatch)
 
     sys.stdin = Peeker(sys.stdin)
 
@@ -93,11 +113,11 @@ def main():
     except IOError as error:
         parser.error(error)
 
-    try:
-        args.func(**{k: v for k, v in vars(args).items()
-            if k not in ('func', 'subcommand')})
-    except ValueError as error:
-        parser.error(error)
+    #try:
+    args.func(**{k: v for k, v in vars(args).items()
+        if k not in ('func', 'subcommand')})
+    #except ValueError as error:
+    #    parser.error(error)
 
 
 if __name__ == '__main__':
