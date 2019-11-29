@@ -17,6 +17,7 @@ class TestCLI(object):
         self._input = open('data/demultiplex.fq')
         self._input_x = open('data/demultiplex_x.fq')
         self._barcodes = open('data/barcodes.txt')
+        self._matchcodes = open('data/matchcodes.txt')
 
     def _md5_check(self, name, md5sum):
         return md5_check(self._handles[name].getvalue(), md5sum)
@@ -81,3 +82,17 @@ class TestCLI(object):
     def test_guess_header_unknown(self):
         assert guess_header_format(
             make_fake_file('', '@name description\n')) == 'unknown'
+
+    def test_match(self):
+        """
+        """
+        cli.bcmatch(self._input, self._matchcodes, 1, False)
+        assert len(self._handles) == 4
+        assert self._md5_check(
+            'demultiplex_1.fq', '5f8d00947e9a794b9ddf187de271ba6f')
+        assert self._md5_check(
+            'demultiplex_2.fq', '7a2889d04b4e8514ca01ea6c75884cd6')
+        assert self._md5_check(
+            'demultiplex_3.fq', '82aedd53845e523f92cf1cdb51cce80d')
+        assert self._md5_check(
+            'demultiplex_4.fq', '28803c1572714d178a1982143d8b7e8f')
