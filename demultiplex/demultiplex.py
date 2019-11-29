@@ -141,6 +141,10 @@ def match(input_handle, barcodes_handle, mismatch, use_edit):
     queue = Queue()
     default_handles = _open_files([filename], 'UNKNOWN', queue)
 
+    indel_score = 1
+    if not use_edit:
+        indel_score = 1000
+
     barcodes = []
     for line in map(lambda x: x.strip().split(), barcodes_handle.readlines()):
         try:
@@ -155,10 +159,6 @@ def match(input_handle, barcodes_handle, mismatch, use_edit):
     for record in reader:
         reference = str(record.seq)
         reference_rc = reverse_complement(reference)
-
-        indel_score = 1
-        if not use_edit:
-            indel_score = len(reference)
 
         found = False
         for handles, barcode in barcodes:

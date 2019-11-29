@@ -97,8 +97,8 @@ Multiple barcodes
 
 Suppose we have two files containing barcodes that are used for dual indexing:
 
-- ``A.txt`` for barcode 1 and 2.
-- ``B.txt`` for barcode 3 and 4.
+- ``A.csv`` for barcode 1 and 2.
+- ``B.csv`` for barcode 3 and 4.
 
 Furthermore, suppose that the first barcode can be found in the header of read
 1 and the second one in the header of read 2.
@@ -107,7 +107,7 @@ We can then demultiplex in two steps:
 
 ::
 
-    demultiplex demux A.txt read_1.fq read_2.fq
+    demultiplex demux A.csv read_1.fq read_2.fq
 
 This will result in two new pairs of files:
 
@@ -118,8 +118,8 @@ We can now demultiplex each of these pairs as follows:
 
 ::
 
-    demultiplex demux B.txt read_2_1.fq read_1_1.fq
-    demultiplex demux B.txt read_2_2.fq read_1_2.fq
+    demultiplex demux B.csv read_2_1.fq read_1_1.fq
+    demultiplex demux B.csv read_2_2.fq read_1_2.fq
 
 Which will result in the final list of pairs: 
 
@@ -127,3 +127,33 @@ Which will result in the final list of pairs:
 - ``read_1_1_4.fq``, ``read_2_1_4.fq``
 - ``read_1_2_3.fq``, ``read_2_2_3.fq``
 - ``read_1_2_4.fq``, ``read_2_2_4.fq``
+
+
+Barcodes at unknown locations
+-----------------------------
+
+Libraries for long read platforms like PacBio and Oxford Nanopore often have
+barcodes in the reads at unknown locations. To demultiplex these kind of
+datasets, it is necessary to align the barcode to the read to find it. This is
+exactly what the ``match`` subcommand does.
+
+The barcodes file is very similar to the one in the ``demux`` command, except
+that it allows for multiple barcodes per sample. If dual barcoding is used, the
+formatting is as follows.
+
+::
+
+    name sequence1 sequence2
+
+So a typical barcodes file might look like this:
+
+::
+
+    index1 ACGTAA TTGCAA
+    index2 GTAAGG GTGTAA
+
+Demultiplexing is done as follows.
+
+::
+
+    demultiplex match barcodes.csv reads.fq
