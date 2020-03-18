@@ -13,15 +13,17 @@ from .match import multi_align
 _get_barcode = {
     'normal' : lambda record: record.id.split('#')[1].split('/')[0],
     'x': lambda record: record.description.split(':')[-1],
+    'umi': lambda record: record.description.split(' ')[0].split(':')[-1],
     'unknown': lambda record: str(record.seq)}
 
 
 class Extractor(object):
-    def __init__(self, handle, in_read=False, start=None, end=None):
+    def __init__(self, handle, in_read=False, fmt=None, start=None, end=None):
         """Configure a barcode extractor.
 
         :arg stream handle: Handle to an NGS data file.
         :arg bool in_read: Inspect the read instead of the header.
+        :arg str fmt: Header format.
         :arg int start: Start of the barcode.
         :arg int end: End of the barcode.
         """
@@ -31,9 +33,13 @@ class Extractor(object):
         if self._start:
             self._start -= 1
 
-        self._get_barcode = _get_barcode['unknown']
-        if not in_read:
-            self._get_barcode = _get_barcode[guess_header_format(handle)]
+        if not fmt:
+            if not in_read:
+                self._get_barcode = _get_barcode[guess_header_format(handle)]
+            else:
+                self._get_barcode = _get_barcode['unknown']
+        else:
+            self._get_barcode = _get_barcode[fmt]
 
     def get(self, record):
         return self._get_barcode(record)[self._start:self._end]
