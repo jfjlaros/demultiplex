@@ -1,5 +1,3 @@
-.. dict-trie documentation.
-
 .. include:: ../README.rst
 
 .. toctree::

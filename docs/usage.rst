@@ -8,14 +8,47 @@ search for the barcodes in the header, or in the read itself. To allow for
 mismatches, two distance functions (edit distance and Hamming distance) are
 available.
 
+This program works with subcommands, an overview of which is shown when the help
+option is used.
+
+::
+
+    demultiplex -h
+
+Each subcommand has its own help option, which shows a full list of options for
+that particular subcommand. For example:
+
+::
+
+    demultiplex demux -h
+
 
 Illumina FASTQ files
 --------------------
 
 For Illumina FASTQ files, the barcodes can usually be found in the header of
-each FASTQ record. Currently, the ``demultiplex`` program supports two types of
-headers, the classical Illumina headers and the newer HiSeq X headers. These
-headers are detected automatically.
+each FASTQ record. Currently, the ``demultiplex`` program supports the
+following types of headers.
+
+.. list-table:: Supported headers.
+   :header-rows: 1
+
+   * - type
+     - select
+     - autodetect
+   * - Classical Illumina
+     - ``--format=normal``
+     - yes
+   * - HiSeq X
+     - ``--format=x``
+     - yes
+   * - UMI
+     - ``--format=umi``
+     - no
+
+
+The classical Illumina headers and the newer HiSeq X headers are detected
+automatically, the UMI type headers need to be selected manually.
 
 Demultiplexing is done with the ``demux`` subcommand by providing a list of
 barcodes. The barcodes file is formatted as follows:
@@ -51,6 +84,29 @@ This will generate six files:
 
 the first four files will contain records assigned to index1 and index2, the
 last two will contain anything that could not be assigned.
+
+The ``demux`` command allows for one substitution in a barcode by default. This
+behaviour can be modified with the ``-m`` and ``-d`` options. The ``-d`` option
+enables support for all single nucleotide variants (substitutions, deletions
+and insertions), while the ``-m`` option controls the amount of mismatches.
+
+.. list-table:: Mismatches examples.
+   :header-rows: 1
+
+   * - example
+     - description
+   * - ``-m 2``
+     - Allow for two substitutions.
+   * - ``-d``
+     - Allow for one single nucleotide variant.
+   * - ``-m 3 -d``
+     - Allow for three single nucleotide variants.
+
+.. note::
+
+    Before modifying the mismatch control options, it is advisable to check
+    whether the set of barcodes used is compatible with these settings. The
+    barcode_ design and validation package can be used for this.
 
 If the list of barcodes is not known beforehand, the ``guess`` subcommand can
 be used to search for a top list of barcodes. For example, if we want to search
@@ -157,3 +213,6 @@ Demultiplexing is done as follows.
 ::
 
     demultiplex match barcodes.csv reads.fq
+
+
+.. _barcode: https://barcode.readthedocs.io/
