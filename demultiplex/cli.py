@@ -1,10 +1,27 @@
-import argparse
-import sys
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from bz2 import open as bz2_open
+from collections import defaultdict
+from gzip import open as gzip_open
+from sys import stdin, stdout
 
 from fastools import Peeker
 
 from . import doc_split, usage, version
 from .demultiplex import _get_barcode, Extractor, count, demultiplex, match
+
+_type_handler = defaultdict(lambda: open, {
+    'bz2': bz2_open,
+    'bzip2': bz2_open,
+    'gz': gzip_open,
+    'gzip': gzip_open})
+
+
+def _file_type(*args, **kwargs):
+    """Argparse FileType replacement."""
+    def _open(name):
+        return _type_handler[name.split('.')[-1]](name, *args, **kwargs)
+
+    return _open
 
 
 def guess(
@@ -36,7 +53,7 @@ def main():
     default_str = ' (default: %(default)s)'
     type_default_str = ' (%(type)s default: %(default)s)'
 
-    common_parser = argparse.ArgumentParser(add_help=False)
+    common_parser = ArgumentParser(add_help=False)
     common_parser.add_argument(
         '-r', dest='in_read', action='store_true',
         help='extract the barcodes from the read' + default_str)
@@ -50,8 +67,8 @@ def main():
         '-e', dest='end', type=int, default=None,
         help='end of the selection' + type_default_str)
 
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+    parser = ArgumentParser(
+        formatter_class=RawDescriptionHelpFormatter,
         description=usage[0], epilog=usage[1])
     parser.add_argument('-v', action='version', version=version(parser.prog))
     subparsers = parser.add_subparsers(dest='subcommand')
@@ -60,11 +77,11 @@ def main():
     subparser = subparsers.add_parser(
         'guess', parents=[common_parser], description=doc_split(guess))
     subparser.add_argument(
-        'input_handle', metavar='INPUT', type=argparse.FileType('r'),
+        'input_handle', metavar='INPUT', type=_file_type('rt'),
         help='input file')
     subparser.add_argument(
         '-o', dest='output_handle', metavar='OUTPUT',
-        type=argparse.FileType('w'), default=sys.stdout,
+        type=_file_type('wt'), default=stdout,
         help='output file (default: <stdout>)')
     subparser.add_argument(
         '-n', dest='sample_size', type=int, default=1000000,
@@ -81,11 +98,11 @@ def main():
         'demux', parents=[common_parser],
         description=doc_split(demux))
     subparser.add_argument(
-        'barcodes_handle', metavar='BARCODES', type=argparse.FileType('r'),
+        'barcodes_handle', metavar='BARCODES', type=_file_type('rt'),
         help='barcodes file')
     subparser.add_argument(
-        'input_handles', metavar='INPUT', nargs='+',
-        type=argparse.FileType('r'), help='input files')
+        'input_handles', metavar='INPUT', nargs='+', type=_file_type('rt'),
+        help='input files')
     subparser.add_argument(
         '-m', dest='mismatch', type=int, default=1,
         help='number of mismatches' + type_default_str)
@@ -96,10 +113,10 @@ def main():
 
     subparser = subparsers.add_parser('match', description=doc_split(bcmatch))
     subparser.add_argument(
-        'barcodes_handle', metavar='BARCODES', type=argparse.FileType('r'),
+        'barcodes_handle', metavar='BARCODES', type=_file_type('rt'),
         help='barcodes file')
     subparser.add_argument(
-        'input_handle', metavar='INPUT', type=argparse.FileType('r'),
+        'input_handle', metavar='INPUT', type=_file_type('rt'),
         help='input file')
     subparser.add_argument(
         '-m', dest='mismatch', type=int, default=1,
@@ -109,7 +126,8 @@ def main():
         help='use Levenshtein distance' + default_str)
     subparser.set_defaults(func=bcmatch)
 
-    sys.stdin = Peeker(sys.stdin)
+    global stdin
+    stdin = Peeker(stdin)
 
     try:
         args = parser.parse_args()
