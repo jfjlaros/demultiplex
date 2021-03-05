@@ -37,21 +37,23 @@ def guess(
 
 def demux(
         input_handles, barcodes_handle, in_read, fmt, start, end, mismatch,
-        use_edit):
+        use_edit, path='.'):
     """Demultiplex any number of files given a list of barcodes."""
     extractor = Extractor(input_handles[0], in_read, fmt, start, end)
-    demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit)
+    demultiplex(
+        input_handles, barcodes_handle, extractor, mismatch, use_edit, path)
 
 
-def bcmatch(input_handle, barcodes_handle, mismatch, use_edit):
+def bcmatch(input_handle, barcodes_handle, mismatch, use_edit, path='.'):
     """Demultiplex one file given a list of barcode tuples."""
-    match(input_handle, barcodes_handle, mismatch, use_edit)
+    match(input_handle, barcodes_handle, mismatch, use_edit, path)
 
 
 def main():
     """Main entry point."""
     default_str = ' (default: %(default)s)'
     type_default_str = ' (%(type)s default: %(default)s)'
+    type_default_str_str = ' (%(type)s default: "%(default)s")'
 
     common_parser = ArgumentParser(add_help=False)
     common_parser.add_argument(
@@ -66,6 +68,17 @@ def main():
     common_parser.add_argument(
         '-e', dest='end', type=int, default=None,
         help='end of the selection' + type_default_str)
+
+    common_options_parser = ArgumentParser(add_help=False)
+    common_options_parser.add_argument(
+        '-m', dest='mismatch', type=int, default=1,
+        help='number of mismatches' + type_default_str)
+    common_options_parser.add_argument(
+        '-d', dest='use_edit', action='store_true',
+        help='use Levenshtein distance' + default_str)
+    common_options_parser.add_argument(
+        '-p', dest='path', type=str, default='.',
+        help='output directory' + type_default_str_str)
 
     parser = ArgumentParser(
         formatter_class=RawDescriptionHelpFormatter,
@@ -95,7 +108,7 @@ def main():
     subparser.set_defaults(func=guess)
 
     subparser = subparsers.add_parser(
-        'demux', parents=[common_parser],
+        'demux', parents=[common_parser, common_options_parser],
         description=doc_split(demux))
     subparser.add_argument(
         'barcodes_handle', metavar='BARCODES', type=_file_type('rt'),
@@ -103,27 +116,17 @@ def main():
     subparser.add_argument(
         'input_handles', metavar='INPUT', nargs='+', type=_file_type('rt'),
         help='input files')
-    subparser.add_argument(
-        '-m', dest='mismatch', type=int, default=1,
-        help='number of mismatches' + type_default_str)
-    subparser.add_argument(
-        '-d', dest='use_edit', action='store_true',
-        help='use Levenshtein distance' + default_str)
     subparser.set_defaults(func=demux)
 
-    subparser = subparsers.add_parser('match', description=doc_split(bcmatch))
+    subparser = subparsers.add_parser(
+        'match', parents=[common_options_parser],
+        description=doc_split(bcmatch))
     subparser.add_argument(
         'barcodes_handle', metavar='BARCODES', type=_file_type('rt'),
         help='barcodes file')
     subparser.add_argument(
         'input_handle', metavar='INPUT', type=_file_type('rt'),
         help='input file')
-    subparser.add_argument(
-        '-m', dest='mismatch', type=int, default=1,
-        help='number of mismatches' + type_default_str)
-    subparser.add_argument(
-        '-d', dest='use_edit', action='store_true',
-        help='use Levenshtein distance' + default_str)
     subparser.set_defaults(func=bcmatch)
 
     global stdin

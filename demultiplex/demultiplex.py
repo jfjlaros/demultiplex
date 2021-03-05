@@ -1,5 +1,5 @@
 from collections import defaultdict
-from os.path import basename, splitext
+from os.path import basename, isdir, splitext
 
 from Bio import SeqIO
 from Bio.Seq import reverse_complement
@@ -68,20 +68,25 @@ def count(handle, extractor, sample_size, threshold, use_freq=False):
     return sorted(barcodes, key=barcodes.get, reverse=True)[:threshold]
 
 
-def _open_files(filenames, barcode, queue):
+def _open_files(path, filenames, barcode, queue):
     """For a list of input files, open the corresponding output files.
 
+    :arg str path: Output directory.
     :arg list filename: List of input filenames.
     :arg str barcode: Name of the barcode.
     :arg Queue queue: Queue for open files.
 
     :returns list: List of handles of output files.
     """
+    if not isdir(path):
+        raise ValueError('invalid output directory')
+
     handles = []
 
     for filename in filenames:
         base, ext = splitext(basename(filename))
-        handles.append(Handle('{}_{}{}'.format(base, barcode, ext), queue))
+        handles.append(
+            Handle('{}/{}_{}{}'.format(path, base, barcode, ext), queue))
 
     return handles
 
@@ -91,7 +96,9 @@ def _write(handles, records, file_format):
         SeqIO.write(record, handles[i], file_format)
 
 
-def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
+def demultiplex(
+        input_handles, barcodes_handle, extractor, mismatch, use_edit,
+        path='.'):
     """Demultiplex a list of NGS data files.
 
     :arg list input_handles: List of handles to NGS data files.
@@ -99,10 +106,11 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
     :arg Extractor extractor: A barcode extractor.
     :arg int mismatch: Number of allowed mismatches.
     :arg bool use_edit: Use Levenshtein distance instead of Hamming distance.
+    :arg str path: Output directory.
     """
     filenames = list(map(lambda x: x.name, input_handles))
     queue = Queue()
-    default_handles = _open_files(filenames, 'UNKNOWN', queue)
+    default_handles = _open_files(path, filenames, 'UNKNOWN', queue)
 
     barcodes = {}
     for line in barcodes_handle.readlines():
@@ -110,7 +118,7 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
             name, barcode = line.strip().split()
         except ValueError:
             raise ValueError('invalid barcodes file format')
-        barcodes[barcode] = _open_files(filenames, name, queue)
+        barcodes[barcode] = _open_files(path, filenames, name, queue)
 
     trie = Trie(barcodes.keys())
     distance_function = trie.best_hamming
@@ -135,17 +143,18 @@ def demultiplex(input_handles, barcodes_handle, extractor, mismatch, use_edit):
     queue.flush()
 
 
-def match(input_handle, barcodes_handle, mismatch, use_edit):
+def match(input_handle, barcodes_handle, mismatch, use_edit, path='.'):
     """Demultiplex a list of NGS data files.
 
     :arg list input_handle: Handle to NGS an data file.
     :arg stream barcodes_handle: Handle to a file containing barcodes.
     :arg int mismatch: Number of allowed mismatches.
     :arg bool use_edit: Use Levenshtein distance instead of Hamming distance.
+    :arg str path: Output directory.
     """
     filename = input_handle.name
     queue = Queue()
-    default_handles = _open_files([filename], 'UNKNOWN', queue)
+    default_handles = _open_files(path, [filename], 'UNKNOWN', queue)
 
     indel_score = 1
     if not use_edit:
@@ -157,7 +166,7 @@ def match(input_handle, barcodes_handle, mismatch, use_edit):
             name = line.pop(0)
         except ValueError:
             raise ValueError('invalid barcodes file format')
-        barcodes.append((_open_files([filename], name, queue), line))
+        barcodes.append((_open_files(path, [filename], name, queue), line))
 
     file_format = guess_file_format(input_handle)
     reader = SeqIO.parse(input_handle, file_format)
