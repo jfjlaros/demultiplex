@@ -42,7 +42,7 @@ class TestCLI(object):
             [self._input], self._barcodes, False, None, None, None, 0, True)
         assert len(self._handles) == 4
         assert self._md5_check(
-            'demultiplex_UNKNOWN.fq', '7a2889d04b4e8514ca01ea6c75884cd6')
+            './demultiplex_UNKNOWN.fq', '7a2889d04b4e8514ca01ea6c75884cd6')
 
     def test_from_file_mismatch_1(self):
         """Read barcodes from file, one mismatch.
@@ -54,7 +54,7 @@ class TestCLI(object):
             [self._input], self._barcodes, False, None, None, None, 1, True)
         assert len(self._handles) == 4
         assert self._md5_check(
-            'demultiplex_2.fq', '7a2889d04b4e8514ca01ea6c75884cd6')
+            './demultiplex_2.fq', '7a2889d04b4e8514ca01ea6c75884cd6')
 
     def test_x_from_file_mismatch_0(self):
         """Read barcodes from file, no mismatches, HiSeq X headers.
@@ -66,9 +66,9 @@ class TestCLI(object):
             [self._input_x], self._barcodes, False, None, None, None, 0, True)
         assert len(self._handles) == 4
         assert self._md5_check(
-            'demultiplex_x_1.fq', '3f013cddfedf1b5b1ad5d01913692333')
+            './demultiplex_x_1.fq', '3f013cddfedf1b5b1ad5d01913692333')
         assert self._md5_check(
-            'demultiplex_x_4.fq', 'a044932ca48decaba985032ecf725753')
+            './demultiplex_x_4.fq', 'a044932ca48decaba985032ecf725753')
 
     def test_wrong_barcode_format(self):
         handle = make_fake_file('', 'ACTA\nACTC\nACTG\nACTT\n')
@@ -93,10 +93,10 @@ class TestCLI(object):
         cli.bcmatch(self._input, self._matchcodes, 1, False)
         assert len(self._handles) == 4
         assert self._md5_check(
-            'demultiplex_1.fq', '5f8d00947e9a794b9ddf187de271ba6f')
+            './demultiplex_1.fq', '5f8d00947e9a794b9ddf187de271ba6f')
         assert self._md5_check(
-            'demultiplex_2.fq', '7a2889d04b4e8514ca01ea6c75884cd6')
+            './demultiplex_2.fq', '7a2889d04b4e8514ca01ea6c75884cd6')
         assert self._md5_check(
-            'demultiplex_3.fq', '82aedd53845e523f92cf1cdb51cce80d')
+            './demultiplex_3.fq', '82aedd53845e523f92cf1cdb51cce80d')
         assert self._md5_check(
-            'demultiplex_4.fq', '28803c1572714d178a1982143d8b7e8f')
+            './demultiplex_4.fq', '28803c1572714d178a1982143d8b7e8f')
