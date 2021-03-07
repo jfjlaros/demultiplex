@@ -1,5 +1,6 @@
 from collections import defaultdict
-from os.path import basename, isdir, splitext
+from os import mkdir
+from os.path import basename, exists, splitext
 
 from Bio import SeqIO
 from Bio.Seq import reverse_complement
@@ -78,8 +79,8 @@ def _open_files(path, filenames, barcode, queue):
 
     :returns list: List of handles of output files.
     """
-    if not isdir(path):
-        raise ValueError('invalid output directory')
+    if not exists(path):
+        mkdir(path)
 
     handles = []
 

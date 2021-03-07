@@ -140,7 +140,7 @@ def main():
     try:
         args.func(**{k: v for k, v in vars(args).items()
             if k not in ('func', 'subcommand')})
-    except ValueError as error:
+    except (ValueError, OSError) as error:
         parser.error(error)
 
 
