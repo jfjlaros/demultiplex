@@ -12,7 +12,7 @@ from .match import multi_align
 
 
 _get_barcode = {
-    'normal' : lambda record: record.id.split('#')[1].split('/')[0],
+    'normal': lambda record: record.id.split('#')[1].split('/')[0],
     'x': lambda record: record.description.split(':')[-1],
     'umi': lambda record: record.description.split(' ')[0].split(':')[-1],
     'unknown': lambda record: str(record.seq)}

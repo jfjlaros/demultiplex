@@ -138,8 +138,9 @@ def main():
         parser.error(error)
 
     try:
-        args.func(**{k: v for k, v in vars(args).items()
-            if k not in ('func', 'subcommand')})
+        args.func(
+            **{k: v for k, v in vars(args).items()
+                if k not in ('func', 'subcommand')})
     except (ValueError, OSError) as error:
         parser.error(error)
 
