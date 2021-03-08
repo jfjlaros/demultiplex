@@ -3,8 +3,8 @@ Demultiplex: FASTA/FASTQ demultiplexer
 
 .. image:: https://img.shields.io/github/last-commit/jfjlaros/demultiplex.svg
    :target: https://github.com/jfjlaros/demultiplex/graphs/commit-activity
-.. image:: https://travis-ci.org/jfjlaros/demultiplex.svg?branch=master
-   :target: https://travis-ci.org/jfjlaros/demultiplex
+.. image:: https://github.com/jfjlaros/demultiplex/actions/workflows/python-package.yml/badge.svg
+   :target: https://github.com/jfjlaros/demultiplex/actions/workflows/python-package.yml
 .. image:: https://readthedocs.org/projects/demultiplex/badge/?version=latest
    :target: https://demultiplex.readthedocs.io/en/latest
 .. image:: https://img.shields.io/github/release-date/jfjlaros/demultiplex.svg
