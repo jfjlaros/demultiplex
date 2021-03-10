@@ -6,7 +6,7 @@ Can this program work with dual barcodes / indexes?
     Yes, but not directly. Because of the large amount of dual (or more)
     indexing approaches, the user interface would become incomprehensible. This
     is why we have decided to support only the basic cases. In order to support
-    an arbitrary amount of barcodes see Section :ref:`multiple_barcodes`.
+    an arbitrary amount of barcodes see the :ref:`multiple_barcodes` section.
 
 
 Can you add support for removing barcodes after demultiplexing?
@@ -34,7 +34,7 @@ file?
 
     The best thing to do is to contact your sequencing provider and ask which
     barcodes were used. If this is not possible for some reason, you may want
-    to ``guess`` subcommand described in Section :ref:`illumina`. If the
+    to ``guess`` subcommand described in the :ref:`illumina` section. If the
     barcodes are in the read instead of the header, you may want to use a tool
     like FastQC_ to find overrepresented sequences. These may be the barcodes
     you are looking for.
