@@ -22,6 +22,7 @@ that particular subcommand. For example:
 
     demultiplex demux -h
 
+.. _illumina:
 
 Illumina FASTQ files
 --------------------
@@ -147,6 +148,8 @@ command:
 
     demultiplex demux -r -e 6 barcodes.csv file.fq
 
+
+.. _multiple_barcodes:
 
 Multiple barcodes
 -----------------

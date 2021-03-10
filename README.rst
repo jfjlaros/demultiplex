@@ -27,9 +27,11 @@ Demultiplex: FASTA/FASTQ demultiplexer
 Versatile NGS demultiplexer with the following features:
 
 - Support for FASTA and FASTQ files.
+- Support for gzip and bzip2 compressed files.
 - Support for multiple reads per fragment, e.g., paired-end.
 - Handles barcodes in the header and in the reads.
-- Handles barcodes at *unknown* locations in reads (e.g., PacBio or Nanopore barcodes).
+- Handles barcodes at *unknown* locations in reads (e.g., PacBio or Nanopore
+  barcodes).
 - Support for selection of part of a barcode.
 - Allows for mismatches, insertions and deletions.
 - Barcode guessing by frequency or fixed amount.

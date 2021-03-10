@@ -6,5 +6,5 @@
 
    installation
    usage
-   library
+   faq
    credits

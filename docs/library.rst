@@ -1,4 +1,0 @@
-Library
-=======
-
-.. warning:: Under construction.
