@@ -1,8 +1,8 @@
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, FileType
 from bz2 import open as bz2_open
 from collections import defaultdict
 from gzip import open as gzip_open
-from sys import stdin, stdout
+from sys import stdin
 
 from fastools import Peeker
 
@@ -49,66 +49,61 @@ def bcmatch(input_handle, barcodes_handle, mismatch, use_edit, path='.'):
     match(input_handle, barcodes_handle, mismatch, use_edit, path)
 
 
-def main():
-    """Main entry point."""
-    default_str = ' (default: %(default)s)'
-    type_default_str = ' (%(type)s default: %(default)s)'
-    type_default_str_str = ' (%(type)s default: "%(default)s")'
-
+def _arg_parser() -> object:
+    """Command line argument parsing."""
     common_parser = ArgumentParser(add_help=False)
     common_parser.add_argument(
         '-r', dest='in_read', action='store_true',
-        help='extract the barcodes from the read' + default_str)
+        help='extract the barcodes from the read')
     common_parser.add_argument(
         '--format', dest='fmt', default=None, choices=_get_barcode.keys(),
-        help='provdide the header format' + default_str)
+        help='provdide the header format')
     common_parser.add_argument(
         '-s', dest='start', type=int, default=None,
-        help='start of the selection' + type_default_str)
+        help='start of the selection')
     common_parser.add_argument(
-        '-e', dest='end', type=int, default=None,
-        help='end of the selection' + type_default_str)
+        '-e', dest='end', type=int, default=None, help='end of the selection')
 
     common_options_parser = ArgumentParser(add_help=False)
     common_options_parser.add_argument(
         '-m', dest='mismatch', type=int, default=1,
-        help='number of mismatches' + type_default_str)
+        help='number of mismatches')
     common_options_parser.add_argument(
         '-d', dest='use_edit', action='store_true',
-        help='use Levenshtein distance' + default_str)
+        help='use Levenshtein distance')
     common_options_parser.add_argument(
-        '-p', dest='path', type=str, default='.',
-        help='output directory' + type_default_str_str)
+        '-p', dest='path', type=str, default='.', help='output directory')
 
     parser = ArgumentParser(
-        formatter_class=RawDescriptionHelpFormatter,
-        description=usage[0], epilog=usage[1])
+        formatter_class=ArgumentDefaultsHelpFormatter, description=usage[0],
+        epilog=usage[1])
     parser.add_argument('-v', action='version', version=version(parser.prog))
     subparsers = parser.add_subparsers(dest='subcommand')
     subparsers.required = True
 
     subparser = subparsers.add_parser(
-        'guess', parents=[common_parser], description=doc_split(guess))
+        'guess', formatter_class=ArgumentDefaultsHelpFormatter,
+        parents=[common_parser], description=doc_split(guess))
     subparser.add_argument(
         'input_handle', metavar='INPUT', type=_file_type('rt'),
         help='input file')
     subparser.add_argument(
-        '-o', dest='output_handle', metavar='OUTPUT',
-        type=_file_type('wt'), default=stdout,
-        help='output file (default: <stdout>)')
+        '-o', dest='output_handle', metavar='OUTPUT', type=_file_type('wt'),
+        default='-', help='output file')
     subparser.add_argument(
         '-n', dest='sample_size', type=int, default=1000000,
-        help='sample size' + type_default_str)
+        help='sample size')
     subparser.add_argument(
         '-f', dest='use_freq', action='store_true',
-        help='select on frequency instead of a fixed amount' + default_str)
+        help='select on frequency instead of a fixed amount')
     subparser.add_argument(
         '-t', dest='threshold', type=int, default=12,
-        help='threshold for the selection method' + type_default_str)
+        help='threshold for the selection method')
     subparser.set_defaults(func=guess)
 
     subparser = subparsers.add_parser(
-        'demux', parents=[common_parser, common_options_parser],
+        'demux', formatter_class=ArgumentDefaultsHelpFormatter,
+        parents=[common_parser, common_options_parser],
         description=doc_split(demux))
     subparser.add_argument(
         'barcodes_handle', metavar='BARCODES', type=_file_type('rt'),
@@ -119,8 +114,8 @@ def main():
     subparser.set_defaults(func=demux)
 
     subparser = subparsers.add_parser(
-        'match', parents=[common_options_parser],
-        description=doc_split(bcmatch))
+        'match', formatter_class=ArgumentDefaultsHelpFormatter,
+        parents=[common_options_parser], description=doc_split(bcmatch))
     subparser.add_argument(
         'barcodes_handle', metavar='BARCODES', type=_file_type('rt'),
         help='barcodes file')
@@ -128,6 +123,13 @@ def main():
         'input_handle', metavar='INPUT', type=_file_type('rt'),
         help='input file')
     subparser.set_defaults(func=bcmatch)
+
+    return parser
+
+
+def main():
+    """Main entry point."""
+    parser = _arg_parser()
 
     global stdin
     stdin = Peeker(stdin)

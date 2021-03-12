@@ -6,5 +6,6 @@
 
    installation
    usage
+   cli
    faq
    credits
