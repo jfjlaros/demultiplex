@@ -1,6 +1,8 @@
+from bz2 import open as bz2_open
 from collections import defaultdict
+from gzip import open as gzip_open
 from os import mkdir
-from os.path import basename, exists, splitext
+from os.path import basename, exists
 
 from Bio import SeqIO
 from Bio.Seq import reverse_complement
@@ -16,6 +18,18 @@ _get_barcode = {
     'x': lambda record: record.description.split(':')[-1],
     'umi': lambda record: record.description.split(' ')[0].split(':')[-1],
     'unknown': lambda record: str(record.seq)}
+
+_type_handler = defaultdict(lambda: open, {
+    'bz2': bz2_open,
+    'bzip2': bz2_open,
+    'gz': gzip_open,
+    'gzip': gzip_open})
+
+
+def _name(handle):
+    if hasattr(handle.buffer, '_fp'):
+        return handle.buffer._fp.name
+    return handle.name
 
 
 class Extractor(object):
@@ -85,9 +99,10 @@ def _open_files(path, filenames, barcode, queue):
     handles = []
 
     for filename in filenames:
-        base, ext = splitext(basename(filename))
+        base, ext = basename(filename).split('.', True)
         handles.append(
-            Handle('{}/{}_{}{}'.format(path, base, barcode, ext), queue))
+            Handle('{}/{}_{}.{}'.format(path, base, barcode, ext), queue,
+                   f_open=_type_handler[ext.split('.')[-1]]))
 
     return handles
 
@@ -109,7 +124,7 @@ def demultiplex(
     :arg bool use_edit: Use Levenshtein distance instead of Hamming distance.
     :arg str path: Output directory.
     """
-    filenames = list(map(lambda x: x.name, input_handles))
+    filenames = list(map(lambda x: _name(x), input_handles))
     queue = Queue()
     default_handles = _open_files(path, filenames, 'UNKNOWN', queue)
 

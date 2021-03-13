@@ -1,9 +1,10 @@
 """Tests for demultiplex."""
+from collections import defaultdict
+from importlib import import_module
 from io import StringIO
 
-from demultiplex import cli
+from demultiplex.cli import demux, guess, bcmatch
 from fastools import guess_header_format
-from jit_open import jit_open
 
 from shared import FakeOpen, md5_check, make_fake_file
 
@@ -12,7 +13,8 @@ class TestCLI(object):
     def setup(self):
         fake_open = FakeOpen()
         self._handles = fake_open.handles
-        jit_open.open = fake_open.open
+        dmp = import_module('demultiplex.demultiplex')
+        dmp._type_handler = defaultdict(lambda: fake_open.open)
 
         self._input = open('data/demultiplex.fq')
         self._input_x = open('data/demultiplex_x.fq')
@@ -24,12 +26,12 @@ class TestCLI(object):
 
     def test_amount_read(self):
         fake_file = StringIO()
-        cli.guess(self._input, fake_file, True, None, 2, 5, 1000000, 4, False)
+        guess(self._input, fake_file, True, None, 2, 5, 1000000, 4, False)
         assert fake_file.getvalue() == '1 AAAA\n2 CCCC\n3 GGGG\n4 TTTT\n'
 
     def test_x_amount(self):
         fake_file = StringIO()
-        cli.guess(
+        guess(
             self._input, fake_file, False, None, None, None, 1000000, 1, False)
         assert fake_file.getvalue() == '1 ACTT\n'
 
@@ -38,7 +40,7 @@ class TestCLI(object):
 
         Result: file 1, 3 and UNKNOWN contain one read, file 4 contains two.
         """
-        cli.demux(
+        demux(
             [self._input], self._barcodes, False, None, None, None, 0, True)
         assert len(self._handles) == 4
         assert self._md5_check(
@@ -50,7 +52,7 @@ class TestCLI(object):
         Result: file 1-3 contain one read, file 4 contains two and UNKNOWN is
         empty. Notably file 2 is not empty although the barcode is shorter.
         """
-        cli.demux(
+        demux(
             [self._input], self._barcodes, False, None, None, None, 1, True)
         assert len(self._handles) == 4
         assert self._md5_check(
@@ -62,7 +64,7 @@ class TestCLI(object):
         Result: file 1-3 contain one sequence, file 4 contains two and UNKNOWN
         is empty.
         """
-        cli.demux(
+        demux(
             [self._input_x], self._barcodes, False, None, None, None, 0, True)
         assert len(self._handles) == 4
         assert self._md5_check(
@@ -73,7 +75,7 @@ class TestCLI(object):
     def test_wrong_barcode_format(self):
         handle = make_fake_file('', 'ACTA\nACTC\nACTG\nACTT\n')
         try:
-            cli.demux([self._input], handle, False, None, None, None, 0, False)
+            demux([self._input], handle, False, None, None, None, 0, False)
         except ValueError as error:
             assert str(error) == 'invalid barcodes file format'
 
@@ -90,7 +92,7 @@ class TestCLI(object):
     def test_match(self):
         """
         """
-        cli.bcmatch(self._input, self._matchcodes, 1, False)
+        bcmatch(self._input, self._matchcodes, 1, False)
         assert len(self._handles) == 4
         assert self._md5_check(
             './demultiplex_1.fq', '5f8d00947e9a794b9ddf187de271ba6f')

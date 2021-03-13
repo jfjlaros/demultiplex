@@ -1,19 +1,11 @@
-from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, FileType
-from bz2 import open as bz2_open
-from collections import defaultdict
-from gzip import open as gzip_open
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 from sys import stdin
 
 from fastools import Peeker
 
 from . import doc_split, usage, version
-from .demultiplex import _get_barcode, Extractor, count, demultiplex, match
-
-_type_handler = defaultdict(lambda: open, {
-    'bz2': bz2_open,
-    'bzip2': bz2_open,
-    'gz': gzip_open,
-    'gzip': gzip_open})
+from .demultiplex import (
+    _get_barcode, _type_handler, Extractor, count, demultiplex, match)
 
 
 def _file_type(*args, **kwargs):
