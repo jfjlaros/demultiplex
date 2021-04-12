@@ -34,10 +34,17 @@ file?
 
     The best thing to do is to contact your sequencing provider and ask which
     barcodes were used. If this is not possible for some reason, you may want
-    to ``guess`` subcommand described in the :ref:`illumina` section. If the
-    barcodes are in the read instead of the header, you may want to use a tool
-    like FastQC_ to find overrepresented sequences. These may be the barcodes
-    you are looking for.
+    to use the ``guess`` subcommand described in the :ref:`illumina` section.
+    If the barcodes are in the read instead of the header, you may want to use
+    a tool like FastQC_ to find overrepresented sequences. These may be the
+    barcodes you are looking for.
+
+I get the message "error: invalid barcodes file format". What is wrong?
+
+    The columns in ``barcodes.csv`` should be separated by spaces, using other
+    delimiters will result in this error message. Also note that the ``demux``
+    subcommand only allows for one barcode, while the ``match`` command can
+    work with multiple barcodes.
 
 
 .. _FastQC: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/
