@@ -159,18 +159,18 @@ def demultiplex(
     queue.flush()
 
 
-def match(input_handle, barcodes_handle, mismatch, use_edit, path='.'):
+def match(input_handles, barcodes_handle, mismatch, use_edit, path='.'):
     """Demultiplex a list of NGS data files.
 
-    :arg list input_handle: Handle to NGS an data file.
+    :arg list input_handles: List of handles to NGS data files.
     :arg stream barcodes_handle: Handle to a file containing barcodes.
     :arg int mismatch: Number of allowed mismatches.
     :arg bool use_edit: Use Levenshtein distance instead of Hamming distance.
     :arg str path: Output directory.
     """
-    filename = input_handle.name
+    filenames = list(map(lambda x: _name(x), input_handles))
     queue = Queue()
-    default_handles = _open_files(path, [filename], 'UNKNOWN', queue)
+    default_handles = _open_files(path, filenames, 'UNKNOWN', queue)
 
     indel_score = 1
     if not use_edit:
@@ -182,27 +182,32 @@ def match(input_handle, barcodes_handle, mismatch, use_edit, path='.'):
             name = line.pop(0)
         except ValueError:
             raise ValueError('invalid barcodes file format')
-        barcodes.append((_open_files(path, [filename], name, queue), line))
+        barcodes.append((_open_files(path, filenames, name, queue), line))
 
-    file_format = guess_file_format(input_handle)
-    reader = SeqIO.parse(input_handle, file_format)
+    file_format = guess_file_format(input_handles[0])
+    readers = list(map(
+        lambda x: SeqIO.parse(x, file_format), input_handles))
 
-    for record in reader:
-        reference = str(record.seq)
+    while True:
+        records = list(map(lambda x: next(x), readers))
+        if not records:
+            break
+
+        reference = str(records[0].seq)
         reference_rc = reverse_complement(reference)
 
         found = False
         for handles, barcode in barcodes:
             if multi_align(reference, barcode, mismatch, indel_score):
-                _write(handles, [record], file_format)
+                _write(handles, records, file_format)
                 found = True
                 continue
             elif multi_align(reference_rc, barcode, mismatch, indel_score):
-                _write(handles, [record], file_format)
+                _write(handles, records, file_format)
                 found = True
                 continue
 
         if not found:
-            _write(default_handles, [record], file_format)
+            _write(default_handles, records, file_format)
 
     queue.flush()

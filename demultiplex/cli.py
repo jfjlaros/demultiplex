@@ -36,9 +36,9 @@ def demux(
         input_handles, barcodes_handle, extractor, mismatch, use_edit, path)
 
 
-def bcmatch(input_handle, barcodes_handle, mismatch, use_edit, path='.'):
+def bcmatch(input_handles, barcodes_handle, mismatch, use_edit, path='.'):
     """Demultiplex one file given a list of barcode tuples."""
-    match(input_handle, barcodes_handle, mismatch, use_edit, path)
+    match(input_handles, barcodes_handle, mismatch, use_edit, path)
 
 
 def _arg_parser() -> object:
@@ -65,6 +65,14 @@ def _arg_parser() -> object:
         help='use Levenshtein distance')
     common_options_parser.add_argument(
         '-p', dest='path', type=str, default='.', help='output directory')
+
+    input_parser = ArgumentParser(add_help=False)
+    input_parser.add_argument(
+        'barcodes_handle', metavar='BARCODES', type=_file_type('rt'),
+        help='barcodes file')
+    input_parser.add_argument(
+        'input_handles', metavar='INPUT', nargs='+', type=_file_type('rt'),
+        help='input files')
 
     parser = ArgumentParser(
         formatter_class=ArgumentDefaultsHelpFormatter, description=usage[0],
@@ -95,25 +103,14 @@ def _arg_parser() -> object:
 
     subparser = subparsers.add_parser(
         'demux', formatter_class=ArgumentDefaultsHelpFormatter,
-        parents=[common_parser, common_options_parser],
+        parents=[common_parser, common_options_parser, input_parser],
         description=doc_split(demux))
-    subparser.add_argument(
-        'barcodes_handle', metavar='BARCODES', type=_file_type('rt'),
-        help='barcodes file')
-    subparser.add_argument(
-        'input_handles', metavar='INPUT', nargs='+', type=_file_type('rt'),
-        help='input files')
     subparser.set_defaults(func=demux)
 
     subparser = subparsers.add_parser(
         'match', formatter_class=ArgumentDefaultsHelpFormatter,
-        parents=[common_options_parser], description=doc_split(bcmatch))
-    subparser.add_argument(
-        'barcodes_handle', metavar='BARCODES', type=_file_type('rt'),
-        help='barcodes file')
-    subparser.add_argument(
-        'input_handle', metavar='INPUT', type=_file_type('rt'),
-        help='input file')
+        parents=[common_options_parser, input_parser],
+        description=doc_split(bcmatch))
     subparser.set_defaults(func=bcmatch)
 
     return parser

@@ -92,7 +92,7 @@ class TestCLI(object):
     def test_match(self):
         """
         """
-        bcmatch(self._input, self._matchcodes, 1, False)
+        bcmatch([self._input], self._matchcodes, 1, False)
         assert len(self._handles) == 4
         assert self._md5_check(
             './demultiplex_1.fq', '5f8d00947e9a794b9ddf187de271ba6f')
