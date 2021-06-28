@@ -159,7 +159,9 @@ def demultiplex(
     queue.flush()
 
 
-def match(input_handles, barcodes_handle, mismatch, use_edit, path='.'):
+def match(
+        input_handles, barcodes_handle, mismatch, use_edit, path='.',
+        filter_multiple=False):
     """Demultiplex a list of NGS data files.
 
     :arg list input_handles: List of handles to NGS data files.
@@ -167,10 +169,12 @@ def match(input_handles, barcodes_handle, mismatch, use_edit, path='.'):
     :arg int mismatch: Number of allowed mismatches.
     :arg bool use_edit: Use Levenshtein distance instead of Hamming distance.
     :arg str path: Output directory.
+    :arg bool filter_multiple: Write multiple matches to separate files.
     """
     filenames = list(map(lambda x: _name(x), input_handles))
     queue = Queue()
     default_handles = _open_files(path, filenames, 'UNKNOWN', queue)
+    multiple_handles = _open_files(path, filenames, 'MULTIPLE', queue)
 
     indel_score = 1
     if not use_edit:
@@ -196,18 +200,20 @@ def match(input_handles, barcodes_handle, mismatch, use_edit, path='.'):
         reference = str(records[0].seq)
         reference_rc = reverse_complement(reference)
 
-        found = False
+        found_handles = []
         for handles, barcode in barcodes:
             if multi_align(reference, barcode, mismatch, indel_score):
-                _write(handles, records, file_format)
-                found = True
-                continue
+                found_handles.append(handles)
             elif multi_align(reference_rc, barcode, mismatch, indel_score):
-                _write(handles, records, file_format)
-                found = True
-                continue
+                found_handles.append(handles)
 
-        if not found:
+        if found_handles:
+            if not filter_multiple or len(found_handles) == 1:
+                for handles in found_handles:
+                    _write(handles, records, file_format)
+            else:
+                _write(multiple_handles, records, file_format)
+        else:
             _write(default_handles, records, file_format)
 
     queue.flush()

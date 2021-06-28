@@ -36,9 +36,13 @@ def demux(
         input_handles, barcodes_handle, extractor, mismatch, use_edit, path)
 
 
-def bcmatch(input_handles, barcodes_handle, mismatch, use_edit, path='.'):
+def bcmatch(
+        input_handles, barcodes_handle, mismatch, use_edit, path='.',
+        filter_multiple=False):
     """Demultiplex one file given a list of barcode tuples."""
-    match(input_handles, barcodes_handle, mismatch, use_edit, path)
+    match(
+        input_handles, barcodes_handle, mismatch, use_edit, path,
+        filter_multiple)
 
 
 def _arg_parser() -> object:
@@ -111,6 +115,9 @@ def _arg_parser() -> object:
         'match', formatter_class=ArgumentDefaultsHelpFormatter,
         parents=[common_options_parser, input_parser],
         description=doc_split(bcmatch))
+    subparser.add_argument(
+        '-f', dest='filter_multiple', default=False, action='store_true',
+        help='write multiple matches to separate files')
     subparser.set_defaults(func=bcmatch)
 
     return parser
