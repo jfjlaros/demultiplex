@@ -18,8 +18,8 @@ class TestCLI(object):
 
         self._input = open('data/demultiplex.fq')
         self._input_x = open('data/demultiplex_x.fq')
-        self._barcodes = open('data/barcodes.txt')
-        self._matchcodes = open('data/matchcodes.txt')
+        self._barcodes = open('data/barcodes.tsv')
+        self._matchcodes = open('data/matchcodes.tsv')
 
     def _md5_check(self, name, md5sum):
         return md5_check(self._handles[name].getvalue(), md5sum)

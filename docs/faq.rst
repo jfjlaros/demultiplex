@@ -41,10 +41,10 @@ file?
 
 I get the message "error: invalid barcodes file format". What is wrong?
 
-    The columns in ``barcodes.csv`` should be separated by spaces, using other
-    delimiters will result in this error message. Also note that the ``demux``
-    subcommand only allows for one barcode, while the ``match`` command can
-    work with multiple barcodes.
+    The columns in ``barcodes.tsv`` should be separated by spaces or tabs,
+    using other delimiters will result in this error message. Also note that
+    the ``demux`` subcommand only allows for one barcode, while the ``match``
+    command can work with multiple barcodes.
 
 
 .. _FastQC: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/
