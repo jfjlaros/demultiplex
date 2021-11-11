@@ -1,7 +1,5 @@
-from subprocess import call
-
-call('pip install ..', shell=True)
-
+# Make sure the package is installed and the requirements file is known.
+# https://readthedocs.org/dashboard/arduino-simple-rpc/advanced/
 from demultiplex import _get_metadata
 
 
