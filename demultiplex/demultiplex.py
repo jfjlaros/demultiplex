@@ -184,7 +184,7 @@ def match(
     for line in map(lambda x: x.strip().split(), barcodes_handle.readlines()):
         try:
             name = line.pop(0)
-        except ValueError:
+        except (IndexError, ValueError):
             raise ValueError('invalid barcodes file format')
         barcodes.append((_open_files(path, filenames, name, queue), line))
 
