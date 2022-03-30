@@ -161,7 +161,7 @@ def demultiplex(
 
 def match(
         input_handles, barcodes_handle, mismatch, use_edit, path='.',
-        filter_multiple=False):
+        filter_multiple=False, directional=False):
     """Demultiplex a list of NGS data files.
 
     :arg list input_handles: List of handles to NGS data files.
@@ -170,6 +170,7 @@ def match(
     :arg bool use_edit: Use Levenshtein distance instead of Hamming distance.
     :arg str path: Output directory.
     :arg bool filter_multiple: Write multiple matches to separate files.
+    :arg bool directional: Directional input data.
     """
     filenames = list(map(lambda x: _name(x), input_handles))
     queue = Queue()
@@ -198,13 +199,15 @@ def match(
             break
 
         reference = str(records[0].seq)
-        reference_rc = reverse_complement(reference)
+        if directional:
+            reference_rc = reverse_complement(reference)
 
         found_handles = []
         for handles, barcode in barcodes:
             if multi_align(reference, barcode, mismatch, indel_score):
                 found_handles.append(handles)
-            elif multi_align(reference_rc, barcode, mismatch, indel_score):
+            elif directional and multi_align(
+                    reference_rc, barcode, mismatch, indel_score):
                 found_handles.append(handles)
 
         if found_handles:

@@ -38,11 +38,11 @@ def demux(
 
 def bcmatch(
         input_handles, barcodes_handle, mismatch, use_edit, path='.',
-        filter_multiple=False):
+        filter_multiple=False, directional=False):
     """Demultiplex one file given a list of barcode tuples."""
     match(
         input_handles, barcodes_handle, mismatch, use_edit, path,
-        filter_multiple)
+        filter_multiple, directional)
 
 
 def _arg_parser() -> object:
@@ -118,6 +118,9 @@ def _arg_parser() -> object:
     subparser.add_argument(
         '-f', dest='filter_multiple', default=False, action='store_true',
         help='write multiple matches to separate files')
+    subparser.add_argument(
+        '-D', dest='directional', default=False, action='store_true',
+        help='directional input data')
     subparser.set_defaults(func=bcmatch)
 
     return parser
