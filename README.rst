@@ -21,7 +21,8 @@ Demultiplex: FASTA/FASTQ demultiplexer
    :target: https://github.com/jfjlaros/demultiplex
 .. image:: https://img.shields.io/github/license/jfjlaros/demultiplex.svg
    :target: https://raw.githubusercontent.com/jfjlaros/demultiplex/master/LICENSE.md
-
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8362959.svg
+   :target: https://zenodo.org/record/8362959
 ----
 
 Versatile NGS demultiplexer with the following features:
