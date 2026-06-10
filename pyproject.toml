@@ -5,7 +5,7 @@ build-backend = 'hatchling.build'
 [project]
 name = 'Demultiplex'
 description = 'Demultiplex any number of FASTA or a FASTQ files based on a list of barcodes.'
-version = '1.2.2'
+version = '1.2.3'
 
 authors = [{name = 'Jeroen F.J. Laros', email = 'jlaros@fixedpoint.nl'}]
 urls = {homepage = 'https://github.com/jfjlaros/demultiplex'}
