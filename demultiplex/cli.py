@@ -3,7 +3,7 @@ from sys import stdin
 
 from fastools import Peeker
 
-from . import doc_split, usage, version
+from . import _copyright, _description, _info, doc_split
 from .demultiplex import (
     _get_barcode, _type_handler, Extractor, count, demultiplex, match)
 
@@ -79,9 +79,9 @@ def _arg_parser() -> object:
         help='input files')
 
     parser = ArgumentParser(
-        formatter_class=ArgumentDefaultsHelpFormatter, description=usage[0],
-        epilog=usage[1])
-    parser.add_argument('-v', action='version', version=version(parser.prog))
+        formatter_class=ArgumentDefaultsHelpFormatter, description=_description,
+        epilog=_copyright)
+    parser.add_argument('-v', action='version', version=_info)
     subparsers = parser.add_subparsers(dest='subcommand')
     subparsers.required = True
 

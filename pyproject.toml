@@ -1,0 +1,25 @@
+[build-system]
+requires = ['hatchling']
+build-backend = 'hatchling.build'
+
+[project]
+name = 'Demultiplex'
+description = 'Demultiplex any number of FASTA or a FASTQ files based on a list of barcodes.'
+version = '1.2.2'
+
+authors = [{name = 'Jeroen F.J. Laros', email = 'jlaros@fixedpoint.nl'}]
+urls = {homepage = 'https://github.com/jfjlaros/demultiplex'}
+readme = 'README.rst'
+keywords = ['bioinformatics', 'barcode', 'FASTQ', 'FASTA', 'demultiplex']
+classifiers = [
+    'Programming Language :: Python :: 3',
+    'Operating System :: OS Independent',
+    'Intended Audience :: Science/Research',
+    'Intended Audience :: Developers',
+    'Topic :: Scientific/Engineering']
+license = 'MIT'
+
+dependencies = ['biopython', 'dict-trie', 'fastools', 'jit-open', 'tssv']
+
+[project.scripts]
+demultiplex = 'demultiplex.cli:main'

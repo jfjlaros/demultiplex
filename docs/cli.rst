@@ -2,5 +2,6 @@ Command Line Interface
 ======================
 
 .. argparse::
-   :ref: demultiplex.cli._arg_parser
+   :module: demultiplex.cli
+   :func: _arg_parser
    :prog: demultiplex
